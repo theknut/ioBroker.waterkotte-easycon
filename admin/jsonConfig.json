@@ -1,0 +1,28 @@
+{
+    "i18n": true,
+    "type": "panel",
+    "items": {
+        "ipAddress": {
+            "type": "text",
+            "label": "IP",
+            "newLine": true
+        },
+        "username": {
+            "type": "text",
+            "label": "Username",
+            "default": "waterkotte",
+            "newLine": true
+        },
+        "password": {
+            "type": "password",
+            "default": "waterkotte",
+            "label": "Password"
+        },
+        "pollingInterval": {
+            "type": "number",
+            "default": 300000,
+            "label": "Polling interval",
+            "help": "In milliseconds (default = 300000 ms = 5 m)"
+        }
+    }
+}
