@@ -7,12 +7,11 @@ declare global {
             ipAddress: string;
             username: string;
             password: string;
-            pollStatesOf: string[] = [];
+            pollStatesOf: string[];
             pollingInterval: number;
         }
     }
 }
 
 // this is required so the above AdapterConfig is found by TypeScript / type checking
-export { };
-
+export {};
