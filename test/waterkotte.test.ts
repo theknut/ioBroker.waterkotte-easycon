@@ -1,7 +1,6 @@
 import { expect } from '@jest/globals';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import { getStates } from '../src/states';
 import {
     AdapterError,
     CommonState,
@@ -279,18 +278,6 @@ describe('Waterkotte API - getTags', () => {
         },
         30000,
     );
-
-    it.only('asdasds', async () => {
-        expect(useMocks).toBeTruthy();
-        mock.onGet(/.*/).reply(200, requestedTagsResponse);
-        const t = getStates(['Heizen', 'Kühlen', 'Wasser', 'Energiebilanz', 'Messwerte', 'Status']);
-        const states: CommonState[] = JSON.parse(requestedTags);
-        const response = await api.getTagsAsync(states, <Login>{ token: '🥑' });
-
-        for (const tag of response) {
-            expect(tag.state).not.toBeUndefined();
-        }
-    });
 });
 
 function applyMock(onMock: () => void) {

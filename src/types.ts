@@ -127,7 +127,7 @@ export class HexAnalogState extends CommonState {
 
     private IEEE754_Hex32ToDez(param1: any, t: any): string {
         const a = param1.toString(16);
-        var e,
+        let e,
             i,
             n,
             l,
