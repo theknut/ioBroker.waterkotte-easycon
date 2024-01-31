@@ -119,7 +119,7 @@ class WaterkotteEasycon extends utils.Adapter {
             },
             native: {},
         });
-        await this.setStateAsync('info.lastError', '', true);
+        await this.setStateAsync('info.lastError', message, true);
     }
 
     /**

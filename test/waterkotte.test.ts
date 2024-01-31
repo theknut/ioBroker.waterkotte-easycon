@@ -240,7 +240,7 @@ describe('Waterkotte API - getTags', () => {
         expect(failedTagRequest!.state).toBeInstanceOf(State);
 
         for (const tagResponse of sortedTagResponses) {
-            expect(tagResponse.response.status).toBe(TagResponse.STATUS);
+            expect(tagResponse.response.status).toBe(TagResponse.STATUS_OK);
             expect(tagResponse.state).not.toBeUndefined();
             expect(tagResponse.response.name).toBe(tagResponse.state.Id);
         }
