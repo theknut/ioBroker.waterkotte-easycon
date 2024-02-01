@@ -46,7 +46,7 @@ class WaterkotteCgi {
     var _a, _b, _c, _d, _e;
     const loginUrl = `${this.cgiUrl}login?username=${username}&password=${password}`;
     const response = await this.requestAsync(loginUrl);
-    var result = (_b = (_a = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()) == null ? void 0 : _a.value) == null ? void 0 : _b.groups;
+    const result = (_b = (_a = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()) == null ? void 0 : _a.value) == null ? void 0 : _b.groups;
     switch (Number(result == null ? void 0 : result.status)) {
       case 1:
         this.log.debug("Successfully logged in");
@@ -70,7 +70,7 @@ class WaterkotteCgi {
     var _a, _b;
     const logoutUrl = `${this.cgiUrl}logout`;
     const response = await this.requestAsync(logoutUrl);
-    var result = (_b = (_a = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()) == null ? void 0 : _a.value) == null ? void 0 : _b.groups;
+    const result = (_b = (_a = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()) == null ? void 0 : _a.value) == null ? void 0 : _b.groups;
     switch (Number(result == null ? void 0 : result.status)) {
       case 1:
         this.log.debug("Successfully logged out");
@@ -102,6 +102,7 @@ class WaterkotteCgi {
         const state = record[parameter.name];
         if (!state) {
           this.log.warn(`Could not match tag resonse for ${parameter.name} to any requested tag`);
+          continue;
         }
         tagResponses.push(
           new ctor(

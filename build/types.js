@@ -132,7 +132,8 @@ class HexAnalogState extends CommonState {
   }
   IEEE754_Hex32ToDez(param1, t) {
     const a = param1.toString(16);
-    var e, i, n, l, o, r, s, d, g, x = "00000000";
+    let e, i, n, l, o, r, s, d, g;
+    const x = "00000000";
     return i = x + parseInt(a.substr(0, 2), 16).toString(2), n = x + parseInt(a.substr(2, 2), 16).toString(2), l = x + parseInt(a.substr(4, 2), 16).toString(2), o = x + parseInt(a.substr(6, 2), 16).toString(2), i = i.substr(i.length - 8, 8), n = n.substr(n.length - 8, 8), l = l.substr(l.length - 8, 8), o = o.substr(o.length - 8, 8), r = i + n + l + o, s = parseInt(r.charAt(0), 2), d = parseInt(r.substr(1, 8), 2), g = parseInt(r.substr(9, 23), 2), e = (1 - 2 * s) * Math.pow(2, d - 127) * (1 + g / Math.pow(2, 23)), e.toFixed(t);
   }
 }

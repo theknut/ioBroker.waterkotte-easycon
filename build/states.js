@@ -61,8 +61,25 @@ function getStates(pollStatesOf) {
     states.push(new import_types.State("Heizen.Raumeinfluss", "A102", dict.getTranslation("A102"), "K"));
     states.push(new import_types.State("Heizen.Raumeinfluss", "A103", dict.getTranslation("A103"), "K"));
     states.push(new import_types.ReadOnlyState("Heizen.Raumeinfluss", "A99", dict.getTranslation("A99"), "K"));
-    states.push(new import_types.IndicatorState("Heizen.Status", "I137", dict.getTranslation("I137")));
+    states.push(new import_types.State("Heizen.Status", "I137", dict.getTranslation("I137")));
+    states.push(new import_types.State("Heizen.Status", "A51", dict.getTranslation("A51")));
+    states.push(new import_types.State("Heizen.Status", "A440", dict.getTranslation("A440")));
+    states.push(new import_types.State("Heizen.Status", "A466", dict.getTranslation("A466")));
+    states.push(new import_types.State("Heizen.Status", "A467", dict.getTranslation("A467")));
+    states.push(new import_types.State("Heizen.Status", "A522", dict.getTranslation("A522")));
+    states.push(new import_types.State("Heizen.Status", "A530", dict.getTranslation("A530")));
+    states.push(new import_types.State("Heizen.Status", "A682", dict.getTranslation("A682")));
+    states.push(new import_types.IndicatorState("Heizen.Status", "D23", dict.getTranslation("D23")));
     states.push(new import_types.IndicatorState("Heizen.Status", "D24", dict.getTranslation("D24")));
+    states.push(new import_types.IndicatorState("Heizen.Status", "D25", dict.getTranslation("D25")));
+    states.push(new import_types.IndicatorState("Heizen.Status", "D251", dict.getTranslation("D251")));
+    states.push(new import_types.IndicatorState("Heizen.Status", "D117", dict.getTranslation("D117")));
+    states.push(new import_types.IndicatorState("Heizen.Status", "D289", dict.getTranslation("D289")));
+    states.push(new import_types.IndicatorState("Heizen.Status", "D577", dict.getTranslation("D577")));
+    states.push(new import_types.IndicatorState("Heizen.Status", "D118", dict.getTranslation("D118")));
+    states.push(new import_types.State("Heizen.Status", "I266", dict.getTranslation("I266")));
+    states.push(new import_types.State("Heizen.Status", "I1270", dict.getTranslation("I1270")));
+    states.push(new import_types.State("Heizen.Status", "I1753", dict.getTranslation("I1753")));
   }
   if (pollStatesOf.includes("K\xFChlen")) {
     states.push(new import_types.State("K\xFChlen.Einstellungen", "A109", dict.getTranslation("A109"), "\xB0C"));
@@ -89,7 +106,8 @@ function getStates(pollStatesOf) {
     states.push(new import_types.State("Wasser.Solarunterst\xFCtzung", "I508", dict.getTranslation("I508"), "\xB0C"));
     states.push(new import_types.State("Wasser.Solarunterst\xFCtzung", "I517", dict.getTranslation("I517")));
     states.push(new import_types.ReadOnlyState("Wasser.Solarunterst\xFCtzung", "I518", dict.getTranslation("I518")));
-    states.push(new import_types.IndicatorState("Wasser.Status", "I139", dict.getTranslation("I139")));
+    states.push(new import_types.State("Wasser.Status", "I139", dict.getTranslation("I139")));
+    states.push(new import_types.IndicatorState("Wasser.Status", "D117", dict.getTranslation("D117")));
     states.push(new import_types.IndicatorState("Wasser.Status", "D118", dict.getTranslation("D118")));
   }
   if (pollStatesOf.includes("Energiebilanz")) {
