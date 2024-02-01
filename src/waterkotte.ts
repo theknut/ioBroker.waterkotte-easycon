@@ -102,6 +102,7 @@ export class WaterkotteCgi {
 
                 if (!state) {
                     this.log.warn(`Could not match tag resonse for ${parameter.name} to any requested tag`);
+                    continue;
                 }
 
                 tagResponses.push(
