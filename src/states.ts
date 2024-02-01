@@ -40,26 +40,8 @@ export function getStates(pollStatesOf: string[]): CommonState[] {
         states.push(new State('Heizen.Raumeinfluss', 'A102', dict.getTranslation('A102'), 'K'));
         states.push(new State('Heizen.Raumeinfluss', 'A103', dict.getTranslation('A103'), 'K'));
         states.push(new ReadOnlyState('Heizen.Raumeinfluss', 'A99', dict.getTranslation('A99'), 'K'));
-        states.push(new State('Heizen.Status', 'I137', dict.getTranslation('I137')));
-
-        states.push(new State('Heizen.Status', 'A51', dict.getTranslation('A51')));
-        states.push(new State('Heizen.Status', 'A440', dict.getTranslation('A440')));
-        states.push(new State('Heizen.Status', 'A466', dict.getTranslation('A466')));
-        states.push(new State('Heizen.Status', 'A467', dict.getTranslation('A467')));
-        states.push(new State('Heizen.Status', 'A522', dict.getTranslation('A522')));
-        states.push(new State('Heizen.Status', 'A530', dict.getTranslation('A530')));
-        states.push(new State('Heizen.Status', 'A682', dict.getTranslation('A682')));
-        states.push(new IndicatorState('Heizen.Status', 'D23', dict.getTranslation('D23')));
+        states.push(new IndicatorState('Heizen.Status', 'I137', dict.getTranslation('I137')));
         states.push(new IndicatorState('Heizen.Status', 'D24', dict.getTranslation('D24')));
-        states.push(new IndicatorState('Heizen.Status', 'D25', dict.getTranslation('D25')));
-        states.push(new IndicatorState('Heizen.Status', 'D251', dict.getTranslation('D251')));
-        states.push(new IndicatorState('Heizen.Status', 'D117', dict.getTranslation('D117')));
-        states.push(new IndicatorState('Heizen.Status', 'D289', dict.getTranslation('D289')));
-        states.push(new IndicatorState('Heizen.Status', 'D577', dict.getTranslation('D577')));
-        states.push(new IndicatorState('Heizen.Status', 'D118', dict.getTranslation('D118')));
-        states.push(new State('Heizen.Status', 'I266', dict.getTranslation('I266')));
-        states.push(new State('Heizen.Status', 'I1270', dict.getTranslation('I1270')));
-        states.push(new State('Heizen.Status', 'I1753', dict.getTranslation('I1753')));
     }
 
     if (pollStatesOf.includes('Kühlen')) {
@@ -91,9 +73,8 @@ export function getStates(pollStatesOf: string[]): CommonState[] {
         states.push(new State('Wasser.Solarunterstützung', 'I517', dict.getTranslation('I517')));
         states.push(new ReadOnlyState('Wasser.Solarunterstützung', 'I518', dict.getTranslation('I518')));
 
-        states.push(new State('Wasser.Status', 'I139', dict.getTranslation('I139')));
-        states.push(new IndicatorState('Wasser.Status', 'D117', dict.getTranslation('D117')));
-        states.push(new IndicatorState('Wasser.Status', 'D118', dict.getTranslation('D118')));
+        states.push(new IndicatorState('Wasser.Status', 'I139', dict.getTranslation('I139')));
+        states.push(new IndicatorState('Wasser.Status', 'D118', dict.getTranslation('D117')));
     }
 
     if (pollStatesOf.includes('Energiebilanz')) {
@@ -148,9 +129,16 @@ export function getStates(pollStatesOf: string[]): CommonState[] {
     if (pollStatesOf.includes('Status')) {
         states.push(new IndicatorState('Status', 'D581', dict.getTranslation('D581')));
         states.push(new IndicatorState('Status', 'D701', dict.getTranslation('D701')));
+        states.push(new IndicatorState('Status', 'D71', dict.getTranslation('D71')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D1010', dict.getTranslation('D1010')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D815', dict.getTranslation('D815')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D816', dict.getTranslation('D816')));
         states.push(new IndicatorState('Status.DigitalEingänge', 'D817', dict.getTranslation('D817')));
         states.push(new IndicatorState('Status.DigitalEingänge', 'D818', dict.getTranslation('D818')));
-        states.push(new IndicatorState('Status.DigitalEingänge', 'D446', dict.getTranslation('D446')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D821', dict.getTranslation('D821')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D822', dict.getTranslation('D822')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D823', dict.getTranslation('D823')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D824', dict.getTranslation('D824')));
     }
 
     return states;
