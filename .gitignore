@@ -6,8 +6,6 @@
 *.code-workspace
 node_modules
 nbproject
-build
-package-lock.json
 
 # npm package files
 iobroker.*.tgz

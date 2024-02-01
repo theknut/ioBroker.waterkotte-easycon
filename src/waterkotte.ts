@@ -31,7 +31,7 @@ export class WaterkotteCgi {
         const loginUrl = `${this.cgiUrl}login?username=${username}&password=${password}`;
         const response = await this.requestAsync(loginUrl);
 
-        var result = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()?.value?.groups;
+        const result = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()?.value?.groups;
 
         switch (Number(result?.status)) {
             case 1:
@@ -62,7 +62,7 @@ export class WaterkotteCgi {
         const logoutUrl = `${this.cgiUrl}logout`;
         const response = await this.requestAsync(logoutUrl);
 
-        var result = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()?.value?.groups;
+        const result = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()?.value?.groups;
 
         switch (Number(result?.status)) {
             case 1:
@@ -102,6 +102,7 @@ export class WaterkotteCgi {
 
                 if (!state) {
                     this.log.warn(`Could not match tag resonse for ${parameter.name} to any requested tag`);
+                    continue;
                 }
 
                 tagResponses.push(

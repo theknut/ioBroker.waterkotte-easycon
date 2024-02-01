@@ -125,18 +125,10 @@ export class HexAnalogState extends CommonState {
         return Number(this.IEEE754_Hex32ToDez(value, 1));
     }
 
-    private IEEE754_Hex32ToDez(param1: any, t: any) {
+    private IEEE754_Hex32ToDez(param1: any, t: any): string {
         const a = param1.toString(16);
-        var e,
-            i,
-            n,
-            l,
-            o,
-            r,
-            s,
-            d,
-            g,
-            x = '00000000';
+        let e, i, n, l, o, r, s, d, g;
+        const x = '00000000';
         return (
             (i = x + parseInt(a.substr(0, 2), 16).toString(2)),
             (n = x + parseInt(a.substr(2, 2), 16).toString(2)),

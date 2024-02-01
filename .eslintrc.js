@@ -44,7 +44,6 @@ module.exports = {
         'no-trailing-spaces': 'error',
         'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
-    quotes: ['error', 'double', { allowTemplateLiterals: true }],
     overrides: [
         {
             files: ['*.test.ts'],

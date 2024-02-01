@@ -32,16 +32,18 @@ class WaterkotteEasycon extends utils.Adapter {
      * Is called when databases are connected and adapter received configuration.
      */
     private async onReady(): Promise<void> {
+        this.log.warn('onReady');
         this.setStateAsync('info.connection', false, true);
 
         this.api = new WaterkotteCgi(this.config.ipAddress, this.log);
-
+        this.log.warn('instance');
         try {
             this.login = await this.api.loginAsync(this.config.username, this.config.password);
             await this.setStateAsync('info.connection', true, true);
             await this.setErrorAsync('');
         } catch (e: unknown) {
             let message = String(e);
+            this.log.warn('error ' + message);
             if (e instanceof WaterkotteError) {
                 message = `${e.code} - ${e.message}`;
             }
@@ -51,11 +53,14 @@ class WaterkotteEasycon extends utils.Adapter {
             return;
         }
 
+        this.log.warn('getstates');
         this.states = getStates(
             this.config.pollStatesOf ?? ['Heizen', 'Kühlen', 'Wasser', 'Energiebilanz', 'Messwerte', 'Status'],
         );
 
+        this.log.warn('updates');
         await this.updateParametersAsync(this.states);
+        this.log.warn('updates done');
         const interval = this.setInterval(
             async (states) => await this.updateParametersAsync(states as CommonState[]),
             this.config.pollingInterval,
@@ -119,7 +124,7 @@ class WaterkotteEasycon extends utils.Adapter {
             },
             native: {},
         });
-        await this.setStateAsync('info.lastError', '', true);
+        await this.setStateAsync('info.lastError', message, true);
     }
 
     /**

@@ -45,7 +45,7 @@
             "zh-cn": "读取和写入 Waterkotte EasyCon 热泵参数"
         },
         "authors": ["theknut <theknutcoding@gmail.com>"],
-        "keywords": ["iobroker", "waterkotte", "cfg", "heat pump"],
+        "keywords": ["waterkotte", "cgi", "heat pump", "wärmepumpe"],
         "license": "MIT",
         "platform": "Javascript/Node.js",
         "main": "build/main.js",
