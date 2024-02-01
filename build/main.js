@@ -35,10 +35,8 @@ class WaterkotteEasycon extends utils.Adapter {
   }
   async onReady() {
     var _a;
-    this.log.warn("onReady");
     this.setStateAsync("info.connection", false, true);
     this.api = new import_waterkotte.WaterkotteCgi(this.config.ipAddress, this.log);
-    this.log.warn("instance");
     try {
       this.login = await this.api.loginAsync(this.config.username, this.config.password);
       await this.setStateAsync("info.connection", true, true);
@@ -53,13 +51,10 @@ class WaterkotteEasycon extends utils.Adapter {
       await this.setErrorAsync(message);
       return;
     }
-    this.log.warn("getstates");
     this.states = (0, import_states.getStates)(
       (_a = this.config.pollStatesOf) != null ? _a : ["Heizen", "K\xFChlen", "Wasser", "Energiebilanz", "Messwerte", "Status"]
     );
-    this.log.warn("updates");
     await this.updateParametersAsync(this.states);
-    this.log.warn("updates done");
     const interval = this.setInterval(
       async (states) => await this.updateParametersAsync(states),
       this.config.pollingInterval,

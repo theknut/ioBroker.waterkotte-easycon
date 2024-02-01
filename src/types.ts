@@ -92,10 +92,22 @@ export class CommonState implements Path {
     }
 
     private toBoolean(value: any): boolean {
-        if (value > 1) {
+        let numbericValue: number;
+        if (typeof value === 'string') {
+            numbericValue = Number(value);
+        } else if (typeof value === 'number') {
+            numbericValue = value;
+        } else if (typeof value === 'boolean') {
+            return value;
+        } else {
+            throw new AdapterError(`Received invalid value type '${value}' for id '${this.Id}'`);
+        }
+
+        if (numbericValue > 1) {
             throw new AdapterError(`Received invalid value '${value}' for id '${this.Id}'`);
         }
-        return value === 1;
+
+        return numbericValue === 1;
     }
 }
 

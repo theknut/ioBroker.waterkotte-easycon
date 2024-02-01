@@ -55,7 +55,7 @@
         "readme": "https://github.com/theknut/ioBroker.waterkotte-easycon/blob/main/README.md",
         "loglevel": "info",
         "tier": 3,
-        "mode": "subscribe",
+        "mode": "daemon",
         "type": "climate-control",
         "compact": true,
         "connectionType": "local",
