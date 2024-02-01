@@ -277,6 +277,20 @@ describe('Waterkotte API - getTags', () => {
         },
         30000,
     );
+
+    it('Should not return values which where not requested', async () => {
+        applyMock(() => {
+            mock.onGet(/.*/).reply(200, `#A32\tS_OK\n192\t-22\n#A1\tS_OK\n192\t55`);
+        });
+
+        const states: CommonState[] = [new State('Heizen.Einstellungen', 'A32', 'Heiztemperatur', '°C')];
+        const response = await api.getTagsAsync(states, <Login>{ token: '🥑' });
+        expect(response).toHaveLength(1);
+        expect(response[0].state).not.toBeUndefined();
+        expect(response[0].state.Id).toBe('A32');
+        expect(response[0].response.name).toBe('A32');
+        expect(response[0].response.value).toBe('-22');
+    }, 30000);
 });
 
 function applyMock(onMock: () => void) {
