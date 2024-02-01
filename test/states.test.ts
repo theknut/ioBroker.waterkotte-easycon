@@ -78,6 +78,7 @@ describe('getStates', () => {
     const kWhState = new HexAnalogState('6', 'A458', 'A459', 'Elektrische Arbeit Gesamt');
     const noUnitState = new State('7', 'A460', 'Arbeitszahl Wärmepumpe');
     const barState = new State('8', 'A8', 'p Verdampfer', 'bar');
+    const evuState = new IndicatorState('9', 'D581', 'Externe Abschaltung');
 
     it.each([
         { state: readOnlyState, expected: 'value.temperature' },

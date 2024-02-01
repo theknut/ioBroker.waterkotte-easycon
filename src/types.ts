@@ -13,6 +13,8 @@ export class CommonState implements Path {
     readonly Type: ioBroker.CommonType;
     readonly ValueMap: Record<number, ioBroker.StringOrTranslated>;
 
+    private idParts: { Qualifier: string; Number: number } | undefined = undefined;
+
     constructor(
         path: string,
         id: string,

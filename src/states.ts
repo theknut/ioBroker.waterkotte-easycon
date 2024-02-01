@@ -148,6 +148,9 @@ export function getStates(pollStatesOf: string[]): CommonState[] {
     if (pollStatesOf.includes('Status')) {
         states.push(new IndicatorState('Status', 'D581', dict.getTranslation('D581')));
         states.push(new IndicatorState('Status', 'D701', dict.getTranslation('D701')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D817', dict.getTranslation('D817')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D818', dict.getTranslation('D817')));
+        states.push(new IndicatorState('Status.DigitalEingänge', 'D446', dict.getTranslation('D446')));
     }
 
     return states;

@@ -160,6 +160,9 @@ function getStates(pollStatesOf) {
   if (pollStatesOf.includes("Status")) {
     states.push(new import_types.IndicatorState("Status", "D581", dict.getTranslation("D581")));
     states.push(new import_types.IndicatorState("Status", "D701", dict.getTranslation("D701")));
+    states.push(new import_types.IndicatorState("Status.DigitalEing\xE4nge", "D817", dict.getTranslation("D817")));
+    states.push(new import_types.IndicatorState("Status.DigitalEing\xE4nge", "D818", dict.getTranslation("D817")));
+    states.push(new import_types.IndicatorState("Status.DigitalEing\xE4nge", "D446", dict.getTranslation("D446")));
   }
   return states;
 }

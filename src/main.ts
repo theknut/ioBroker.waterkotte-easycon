@@ -99,7 +99,11 @@ class WaterkotteEasycon extends utils.Adapter {
                     native: {},
                 });
 
-                await this.setStateAsync(id, tagResponse.state.normalizeValue(tagResponse.response.value), true);
+                await this.setStateAsync(
+                    id,
+                    tagResponse.state.normalizeValue(Number(tagResponse.response.value)),
+                    true,
+                );
             }
         } catch (e: unknown) {
             let message: string = 'unknown';

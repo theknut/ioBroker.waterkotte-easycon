@@ -91,7 +91,11 @@ class WaterkotteEasycon extends utils.Adapter {
           common: tagResponse.state.getCommonObject(),
           native: {}
         });
-        await this.setStateAsync(id, tagResponse.state.normalizeValue(tagResponse.response.value), true);
+        await this.setStateAsync(
+          id,
+          tagResponse.state.normalizeValue(Number(tagResponse.response.value)),
+          true
+        );
       }
     } catch (e) {
       let message = "unknown";

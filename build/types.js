@@ -42,6 +42,7 @@ class CommonState {
   Text;
   Type;
   ValueMap;
+  idParts = void 0;
   constructor(path, id, text, unit, readonly = true, valueMap = [], type = "number") {
     this.Path = path;
     this.Id = id;
