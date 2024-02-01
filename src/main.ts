@@ -38,6 +38,7 @@ class WaterkotteEasycon extends utils.Adapter {
 
         try {
             this.login = await this.api.loginAsync(this.config.username, this.config.password);
+            this.log.debug('Successfully logged in');
             await this.setStateAsync('info.connection', true, true);
             await this.setErrorAsync('');
         } catch (e: unknown) {

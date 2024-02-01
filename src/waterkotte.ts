@@ -35,7 +35,6 @@ export class WaterkotteCgi {
 
         switch (Number(result?.status)) {
             case 1:
-                this.log.debug('Successfully logged in');
                 break;
             default:
                 if (result) {

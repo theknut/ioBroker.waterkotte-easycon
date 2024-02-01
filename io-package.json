@@ -99,7 +99,7 @@
             "native": {}
         },
         {
-            "_id": "info.error",
+            "_id": "info.lastError",
             "type": "state",
             "common": {
                 "role": "state",

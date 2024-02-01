@@ -262,7 +262,7 @@ describe('Waterkotte API - getTags', () => {
         'Should get split $numberOfTags tags into $expectedCalls chunks',
         async ({ numberOfTags, expectedCalls }) => {
             applyMock(() => {
-                mock.onGet(/.*/).reply(200, tagResponseWithUnknownTag);
+                mock.onGet(/.*/).reply(200, `#A32\tS_OK\n192\t-22`);
             });
 
             (api as any).maximumTagsPerRequest = 5;
@@ -298,8 +298,6 @@ function mockLogin(returnCookie: boolean = true) {
 }
 
 const tagResponseWithUnknownTag = `
-#A32	S_OK
-192	-22
 #A1	S_OK
 192	-5
 #I2017	S_OK
