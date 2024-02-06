@@ -43,7 +43,7 @@ describe('Types test', () => {
 
     it('Should throw if state type is not supported', () => {
         try {
-            CommonState.getIdParts('555');
+            new IndicatorState('1', '555', '').getIdParts();
             throw new Error('Invalid state type did not throw error');
         } catch (e: unknown) {
             expect(e).toBeInstanceOf(AdapterError);
@@ -58,7 +58,7 @@ describe('Types test', () => {
         { state: kelvinState, qualifier: 'A', number: 61 },
         { state: kWhState, qualifier: 'A', number: 458 },
     ])('Should get qualifier $qualifier and number $number for $state.Id', ({ state, qualifier, number }) => {
-        expect(CommonState.getIdParts(state.Id)).toStrictEqual({ Qualifier: qualifier, Number: number });
+        expect(state.getIdParts()).toStrictEqual({ Qualifier: qualifier, Number: number });
     });
 
     it.each([

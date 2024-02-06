@@ -5,40 +5,31 @@ interface Path {
 export class CommonState implements Path {
     private static readonly ID_PARTS_REGEXP = /(?<qualifier>[a-z])(?<number>\d+)/gim;
     readonly type: string = 'CommonState';
-    readonly Path: string;
-    readonly Id: string;
-    readonly Readonly: boolean;
-    readonly Unit: string | undefined;
-    readonly Text: ioBroker.StringOrTranslated;
-    readonly Type: ioBroker.CommonType;
-    readonly ValueMap: Record<number, ioBroker.StringOrTranslated>;
 
     private idParts: { Qualifier: string; Number: number } | undefined = undefined;
 
     constructor(
-        path: string,
-        id: string,
-        text: ioBroker.StringOrTranslated,
-        unit?: string,
-        readonly: boolean = true,
-        valueMap: Record<number, ioBroker.StringOrTranslated> = [],
-        type: ioBroker.CommonType = 'number',
-    ) {
-        this.Path = path;
-        this.Id = id;
-        this.Text = text;
-        this.Unit = unit;
-        this.Readonly = readonly;
-        this.ValueMap = valueMap;
-        this.Type = type;
+        public readonly Path: string,
+        public readonly Id: string,
+        public readonly Text: ioBroker.StringOrTranslated,
+        public readonly Unit?: string,
+        public readonly Readonly: boolean = true,
+        public readonly ValueMap: Record<number, ioBroker.StringOrTranslated> = [],
+        public readonly Type: ioBroker.CommonType = 'number',
+    ) {}
+
+    getIdParts(): { Qualifier: string; Number: number } {
+        if (!this.idParts) {
+            this.idParts = this.doGetIdParts(this.Id);
+        }
+        return this.idParts;
     }
 
-    static getIdParts(id: string): { Qualifier: string; Number: number } {
+    protected doGetIdParts(id: string): { Qualifier: string; Number: number } {
         const groups = id.matchAll(CommonState.ID_PARTS_REGEXP)?.next()?.value?.groups;
         if (!groups) {
             throw new AdapterError(`Tag id ${id} format not supported`);
         }
-
         return { Qualifier: groups.qualifier, Number: Number(groups.number) };
     }
 
@@ -70,7 +61,7 @@ export class CommonState implements Path {
     }
 
     normalizeValue(value: number): any {
-        switch (this.Id[0]) {
+        switch (this.getIdParts().Qualifier) {
             case 'D':
                 return this.toBoolean(value);
             case 'A':
@@ -119,13 +110,15 @@ export class HexAnalogState extends CommonState {
         public idSecondary: string,
         text: ioBroker.StringOrTranslated,
     ) {
-        if (
-            CommonState.getIdParts(idPrimary).Qualifier !== 'A' ||
-            CommonState.getIdParts(idSecondary).Qualifier !== 'A'
-        ) {
+        super(path, idPrimary, text, 'kWh', true, [], 'number');
+
+        if (!this.hasValidIds(idPrimary, idSecondary)) {
             throw new AdapterError(`Only analog values can be hex (${idPrimary}, ${idSecondary})`);
         }
-        super(path, idPrimary, text, 'kWh', true, [], 'number');
+    }
+
+    private hasValidIds(primaryId: string, secondaryId: string): boolean {
+        return this.doGetIdParts(primaryId).Qualifier === 'A' && this.doGetIdParts(secondaryId).Qualifier == 'A';
     }
 
     normalizeHexValue(firstValue: number, secondaryValue: number): any {

@@ -22,15 +22,22 @@ __export(dictionary_exports, {
 });
 module.exports = __toCommonJS(dictionary_exports);
 class WaterkotteDictionary {
-  getTranslation(identifier) {
-    const dict = this["lng" + identifier];
-    if (!dict || !Array.isArray(dict)) {
-      return identifier;
-    }
+  constructor(forbiddenChars) {
+    this.forbiddenChars = forbiddenChars;
+  }
+  getTranslation(...identifiers) {
+    return this.toStringOrTranslated(
+      identifiers.map((identifier) => {
+        const dict = this["lng" + identifier];
+        return !dict || !Array.isArray(dict) ? dict : [identifier];
+      })
+    );
+  }
+  toStringOrTranslated(dicts) {
     return {
-      de: dict[0],
-      en: dict.length > 1 ? dict[1] : dict[0],
-      fr: dict.length > 2 ? dict[2] : dict.length > 1 ? dict[1] : dict[0]
+      de: dicts.map((dict) => dict[0]).join("."),
+      en: dicts.map((dict) => dict.length > 1 ? dict[1] : dict[0]).join("."),
+      fr: dicts.map((dict) => dict.length > 2 ? dict[2] : dict.length > 1 ? dict[1] : dict[0]).join(".")
     };
   }
   offAutoManuell = {

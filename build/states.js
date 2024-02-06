@@ -27,9 +27,10 @@ function getStates(pollStatesOf) {
   const states = [];
   const dict = new import_dictionary.WaterkotteDictionary();
   if (pollStatesOf.includes("Heizen")) {
+    const heatingSettings = dict.getTranslations("Heat", "Settings");
     states.push(
       new import_types.EnumState(
-        "Heizen.Einstellungen",
+        heatingSettings,
         "I263",
         dict.getTranslation("I263"),
         { 0: "-2.0", 1: "-1.5", 2: "-1.0", 3: "-0.5", 4: "0.0", 5: "0.5", 6: "1.0", 7: "1.5", 8: "2.0" },

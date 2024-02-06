@@ -40,7 +40,7 @@ class WaterkotteEasycon extends utils.Adapter {
             this.login = await this.api.loginAsync(this.config.username, this.config.password);
             this.log.debug('Successfully logged in');
             await this.setStateAsync('info.connection', true, true);
-            await this.setErrorAsync('');
+            await this.setMessageStateAsync('');
         } catch (e: unknown) {
             let message = String(e);
             this.log.warn('error ' + message);
@@ -49,12 +49,13 @@ class WaterkotteEasycon extends utils.Adapter {
             }
 
             this.log.error(message);
-            await this.setErrorAsync(message);
+            await this.setMessageStateAsync(message);
             return;
         }
 
         this.states = getStates(
             this.config.pollStatesOf ?? ['Heizen', 'Kühlen', 'Wasser', 'Energiebilanz', 'Messwerte', 'Status'],
+            this.language,
         );
 
         await this.updateParametersAsync(this.states);
@@ -112,12 +113,12 @@ class WaterkotteEasycon extends utils.Adapter {
                 message = e.message;
             }
             this.log.warn(`Error during update: '${message}'`);
-            await this.setErrorAsync(message);
+            await this.setMessageStateAsync(message);
         }
     }
 
-    private async setErrorAsync(message: string): Promise<void> {
-        await this.extendObjectAsync('info.lastError', {
+    private async setMessageStateAsync(message: string): Promise<void> {
+        await this.extendObjectAsync('info.message', {
             type: 'state',
             common: {
                 write: false,
@@ -125,7 +126,7 @@ class WaterkotteEasycon extends utils.Adapter {
             },
             native: {},
         });
-        await this.setStateAsync('info.lastError', message, true);
+        await this.setStateAsync('info.message', message, true);
     }
 
     /**

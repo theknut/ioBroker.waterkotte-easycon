@@ -11,16 +11,16 @@ describe('getStates', () => {
     });
 
     it('Should only return states of the provided identifiers', () => {
-        const heizenStates = getStates(['Heizen']);
+        const heizenStates = getStates(['Heizen'], 'es');
         expect(heizenStates).not.toHaveLength(0);
 
         for (const state of heizenStates) {
-            expect(state.Path.startsWith('Heizen')).toBeTruthy();
+            expect(state.Path.startsWith('Heating')).toBeTruthy();
         }
     });
 
     it('Should return all requested identifiers', () => {
-        const states = getStates(['Heizen', 'Kühlen', 'Wasser', 'Energiebilanz', 'Messwerte', 'Status']);
+        const states = getStates(['Heizen', 'Kühlen', 'Wasser', 'Energiebilanz', 'Messwerte', 'Status'], 'de');
         expect(states).not.toHaveLength(0);
 
         expect(states.some((x) => x.Path.includes('Heizen'))).toBeTruthy();

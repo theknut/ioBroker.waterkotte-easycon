@@ -1,27 +1,43 @@
 // , '([\w\d]+)',\s'([\w\d\s\-ßØöÖäÄüÜ\.\(\)]+)'(,|)
 
-export class WaterkotteDictionary {
-    [key: string]: string[] | any;
+import { AdapterError } from './types';
 
-    getTranslation(identifier: string): ioBroker.StringOrTranslated {
-        const dict = this['lng' + identifier];
-        if (!dict || !Array.isArray(dict)) {
-            return identifier;
+export class WaterkotteDictionary {
+    [name: string]: any;
+
+    constructor(private forbiddenChars?: RegExp) {}
+
+    getTranslations(identifiers: string | string[], language: ioBroker.Languages): string {
+        if (!language) {
+            throw new AdapterError(`Could not get '${language}' translation for ${identifiers}`);
         }
 
-        return <ioBroker.StringOrTranslated>{
-            de: dict[0],
-            en: dict.length > 1 ? dict[1] : dict[0], // fall back to German
-            fr: dict.length > 2 ? dict[2] : dict.length > 1 ? dict[1] : dict[0], // fall back to English or German
-        };
+        const translated = this.getTranslation(identifiers);
+        const translatedLanguage = translated[language] ?? translated['en'];
+        if (!translatedLanguage) {
+            throw new AdapterError(`Could not get '${language}' translation for ${identifiers}`);
+        }
+        return translatedLanguage;
     }
 
-    offAutoManuell = {
-        0: this.getTranslation('Off'),
-        1: this.getTranslation('Auto'),
-        2: this.getTranslation('Manual'),
-    };
-    noneDayAll = { 0: this.getTranslation('None'), 1: this.getTranslation('Day'), 2: this.getTranslation('All') };
+    getTranslation(identifiers: string | string[]): ioBroker.Translated {
+        const translated = this.toStringOrTranslated(
+            (typeof identifiers === 'string' ? [identifiers] : identifiers).map((identifier) => {
+                const dict = this['lng' + identifier] as string[];
+                return Array.isArray(dict) ? dict : [identifier];
+            }),
+        );
+
+        return translated;
+    }
+
+    private toStringOrTranslated(dicts: string[][]): ioBroker.Translated {
+        return <ioBroker.Translated>{
+            de: dicts.map((dict) => dict[0]).join('.'),
+            en: dicts.map((dict) => (dict.length > 1 ? dict[1] : dict[0])).join('.'), // fall back to German
+            fr: dicts.map((dict) => (dict.length > 2 ? dict[2] : dict.length > 1 ? dict[1] : dict[0])).join('.'), // fall back to English or German
+        };
+    }
 
     aLNG = ['de', 'en', 'fr'];
     iLng = this.aLNG.indexOf('de');
@@ -2427,4 +2443,11 @@ export class WaterkotteDictionary {
     aI2196 = this.aI2195;
     aI2197 = this.aI2195;
     aI2198 = this.aI2195;
+
+    offAutoManuell = {
+        0: this.getTranslation('Off'),
+        1: this.getTranslation('Auto'),
+        2: this.getTranslation('Manual'),
+    };
+    noneDayAll = { 0: this.getTranslation('None'), 1: this.getTranslation('Day'), 2: this.getTranslation('All') };
 }

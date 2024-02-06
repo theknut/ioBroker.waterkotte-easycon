@@ -20,8 +20,8 @@
         "title": "waterkotte-easycon",
         "titleLang": {
             "en": "waterkotte-easycon",
-            "de": "Waterkotte-Easycon",
-            "ru": "Waterkotte-easycon",
+            "de": "waterkotte-easycon",
+            "ru": "waterkotte-easycon",
             "pt": "waterkotte-easycon",
             "nl": "waterkotte-easycon",
             "fr": "waterkotte-easycon",
@@ -29,7 +29,7 @@
             "es": "waterkotte-easycon",
             "pl": "waterkotte-easycon",
             "uk": "waterkotte-easycon",
-            "zh-cn": "Waterkotte-easycon"
+            "zh-cn": "waterkotte-easycon"
         },
         "desc": {
             "en": "Read and write parameters of Waterkotte EasyCon heat pumps via CGI requests",
@@ -99,11 +99,11 @@
             "native": {}
         },
         {
-            "_id": "info.lastError",
+            "_id": "info.message",
             "type": "state",
             "common": {
                 "role": "state",
-                "name": "Last error",
+                "name": "Information message from the adapter",
                 "type": "string",
                 "read": true,
                 "write": false,
