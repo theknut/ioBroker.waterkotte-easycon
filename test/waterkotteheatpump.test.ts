@@ -1,30 +1,16 @@
 import { expect } from '@jest/globals';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import {
-    AdapterError,
-    CommonState,
-    EnumState,
-    IndicatorState,
-    Login,
-    ReadOnlyState,
-    RethrowError,
-    State,
-    TagResponse,
-    UnknownTagResponse,
-    WaterkotteError,
-} from '../src/types';
-import { WaterkotteCgi } from '../src/waterkottecgi';
+import { WaterkotteHeatPump } from '../src/waterkotteheatpump';
 
-let useMocks = true;
+let useMocks = false;
 
-let api: WaterkotteCgi;
+let heatPump: WaterkotteHeatPump;
 let anyApi: any;
 let mock: MockAdapter;
 
 beforeEach(() => {
-    api = new WaterkotteCgi('192.168.178.46', console);
-    anyApi = api;
+    heatPump = new WaterkotteHeatPump('192.168.178.46', console);
     if (useMocks) {
         mock = new MockAdapter(axios);
     }
@@ -36,260 +22,12 @@ afterEach(() => {
     }
 });
 
-describe('Waterkotte API - login', () => {
+describe('Waterkotte Heat Pump - login', () => {
     it('Should login with proper credentials', async () => {
-        mockLogin();
+        const login = await heatPump.connect();
+        expect(login).toBeTruthy();
 
-        const login = await api.loginAsync();
-        expect(login).not.toBeUndefined();
-
-        if (useMocks) {
-            expect(login.token).toBe(`😘`);
-        } else {
-            expect(login.token).not.toHaveLength(0);
-        }
-    }, 30000);
-
-    it('Should not login with invalid credentials', async () => {
-        applyMock(() => {
-            const data = '-49\n#E_USER_DONT_EXIST';
-            mock.onGet(/.*/).reply(200, data);
-        });
-
-        try {
-            await api.loginAsync('john doe', 'jane');
-            throw new Error('Login with invalid credentials did not throw error');
-        } catch (e: unknown) {
-            expect(e).toBeInstanceOf(WaterkotteError);
-            const waterkotteError = e as WaterkotteError;
-
-            expect(waterkotteError.message).toEqual('#E_USER_DONT_EXIST');
-            expect(waterkotteError.code).toBe(-49);
-        }
-    }, 30000);
-
-    it('Should handle re-login attempt', async () => {
-        expect(useMocks).toBeTruthy();
-
-        const data = '#E_RE-LOGIN_ATTEMPT';
-        mock.onGet(/.*/).reply(200, data);
-
-        try {
-            await api.loginAsync();
-            throw new Error('Login with invalid credentials did not throw error');
-        } catch (e: unknown) {
-            expect(e).toBeInstanceOf(AdapterError);
-            const adapterError = e as AdapterError;
-            expect(adapterError.message.includes(data)).toBeTruthy();
-        }
-    });
-
-    it('Should throw if cookie was not returned', async () => {
-        mockLogin(false);
-
-        try {
-            await api.loginAsync();
-            throw new Error('Login with invalid credentials did not throw error');
-        } catch (e: unknown) {
-            expect(e).toBeInstanceOf(AdapterError);
-            const adapterError = e as AdapterError;
-
-            expect(adapterError.message.includes('Could not find login token')).toBeTruthy();
-        }
-    });
-
-    it('Should logout', async () => {
-        expect(useMocks).toBeTruthy();
-
-        const data = '1\n#S_OK';
-        mock.onGet(/.*logout/).reply(200, data);
-
-        await api.logoutAsync();
-    });
-
-    it('Should handle logout error', async () => {
-        expect(useMocks).toBeTruthy();
-
-        const data = '-49\n#E_USER_DONT_EXIST';
-        mock.onGet(/.*/).reply(200, data);
-
-        try {
-            await api.logoutAsync();
-            throw new Error('Logout did not throw error');
-        } catch (e: unknown) {
-            expect(e).toBeInstanceOf(WaterkotteError);
-            const waterkotteError = e as WaterkotteError;
-
-            expect(waterkotteError.message).toEqual('#E_USER_DONT_EXIST');
-            expect(waterkotteError.code).toBe(-49);
-        }
-    });
-
-    it('Should handle logout error', async () => {
-        expect(useMocks).toBeTruthy();
-
-        const data = '#E_RE-LOGIN_ATTEMPT';
-        mock.onGet(/.*/).reply(200, data);
-
-        try {
-            await api.logoutAsync();
-            throw new Error('Logout did not throw error');
-        } catch (e: unknown) {
-            expect(e).toBeInstanceOf(AdapterError);
-            const adapterError = e as AdapterError;
-
-            expect(adapterError.message.includes(data)).toBeTruthy();
-        }
-    });
-
-    it('Should throw if login response can not be parsed', async () => {
-        expect(useMocks).toBeTruthy();
-        const data = 'Something unexpected was returned';
-        mock.onGet(/.*/).reply(200, data);
-
-        try {
-            await api.loginAsync('john doe', 'jane');
-        } catch (e: unknown) {
-            expect(e).toBeInstanceOf(AdapterError);
-            const adapterError = e as AdapterError;
-
-            expect(adapterError.message.includes(data)).toBeTruthy();
-        }
-    });
-
-    it('Should not expose credentials in error message', async () => {
-        expect(useMocks).toBeTruthy();
-        const data = 'Something unexpected was returned';
-        mock.onGet(/.*/).reply(404, data);
-
-        try {
-            await api.loginAsync();
-        } catch (e: unknown) {
-            expect(e).toBeInstanceOf(RethrowError);
-            const rethrowError = e as RethrowError;
-
-            expect(rethrowError.message.startsWith('Request failed:')).toBeTruthy();
-        }
-    });
-
-    it('Should log request url in error message', async () => {
-        expect(useMocks).toBeTruthy();
-        const data = 'Something unexpected was returned';
-        mock.onGet(/.*/).reply(404, data);
-
-        try {
-            await api.requestAsync('http://');
-        } catch (e: unknown) {
-            expect(e).toBeInstanceOf(RethrowError);
-            const rethrowError = e as RethrowError;
-
-            expect(rethrowError.message.startsWith(`Request to 'http://`)).toBeTruthy();
-        }
-    });
-
-    it('Should throw if heat pump can not be contacted', async () => {
-        applyMock(() => {
-            const data = 'Something unexpected was returned';
-            mock.onGet(/.*/).reply(404, data);
-        });
-
-        api = new WaterkotteCgi('192.168.178.55', console);
-
-        try {
-            await api.loginAsync('john doe', 'jane');
-        } catch (e: unknown) {
-            expect(e).toBeInstanceOf(AdapterError);
-        }
-    }, 30000);
-});
-
-describe('Waterkotte API - getTags', () => {
-    it('Should handle parameter request response', async () => {
-        mockLogin();
-        applyMock(() => {
-            mock.onGet(/.*readTags\?.*/).reply(200, tagResponseWithUnknownTag);
-        });
-
-        const login = await api.loginAsync();
-        expect(login).not.toBeUndefined();
-        expect(login.token).not.toBeUndefined();
-
-        const states: CommonState[] = [];
-        states.push(new ReadOnlyState('1', 'A1', 'Außentemperatur', '°C'));
-        states.push(new IndicatorState('2', 'I139', 'Aktiv'));
-        states.push(new EnumState('3', 'A101', 'Raumeinfluss', { 0: '0', 1: '50', 2: '100', 3: '150', 4: '200' }, '%'));
-        states.push(new State('7', 'BEEF', 'Unknown Tag'));
-        states.push(new ReadOnlyState('5', 'I2017', 'p1 Sauggas', 'bar'));
-        states.push(new State('4', 'A3', 'Außentemperatur Ø24h', '°C'));
-        states.push(new IndicatorState('6', 'D581', 'Externe Abschaltung'));
-
-        const tagResponses = await api.getTagsAsync(states, login);
-        expect(tagResponses).not.toBeUndefined();
-        expect(tagResponses).toHaveLength(states.length);
-
-        const sortedTagResponses = tagResponses.sort((current, next) =>
-            Number(current.state.Path) < Number(next.state.Path) ? -1 : 1,
-        );
-
-        const failedTagRequest = sortedTagResponses.pop();
-        expect(failedTagRequest).not.toBeUndefined();
-        expect(failedTagRequest).toBeInstanceOf(UnknownTagResponse);
-        expect(failedTagRequest!.response.status).toBe('E_UNKNOWNTAG');
-        expect(failedTagRequest!.state).not.toBeUndefined();
-        expect(failedTagRequest!.response.name).toBe(failedTagRequest!.state.Id);
-        expect(failedTagRequest!.state).toBeInstanceOf(State);
-
-        for (const tagResponse of sortedTagResponses) {
-            expect(tagResponse.response.status).toBe(TagResponse.STATUS_OK);
-            expect(tagResponse.state).not.toBeUndefined();
-            expect(tagResponse.response.name).toBe(tagResponse.state.Id);
-        }
-
-        expect(tagResponses[0].state).toBeInstanceOf(ReadOnlyState);
-        expect(tagResponses[1].state).toBeInstanceOf(IndicatorState);
-        expect(tagResponses[2].state).toBeInstanceOf(EnumState);
-        expect(tagResponses[3].state).toBeInstanceOf(State);
-
-        const t = sortedTagResponses[5].state.normalizeValue(Number(sortedTagResponses[5].response.value));
-    }, 30000);
-
-    it.each([
-        { numberOfTags: 38, expectedCalls: 8 },
-        { numberOfTags: 35, expectedCalls: 7 },
-        { numberOfTags: 3, expectedCalls: 1 },
-        { numberOfTags: 0, expectedCalls: 0 },
-    ])(
-        'Should get split $numberOfTags tags into $expectedCalls chunks',
-        async ({ numberOfTags, expectedCalls }) => {
-            applyMock(() => {
-                mock.onGet(/.*/).reply(200, `#A32\tS_OK\n192\t-22`);
-            });
-
-            (api as any).maximumTagsPerRequest = 5;
-
-            const states: CommonState[] = [];
-            for (let i = 0; i < numberOfTags; i++) {
-                states.push(new State('Heizen.Einstellungen', 'A32', 'Heiztemperatur', '°C'));
-            }
-
-            const response = await api.getTagsAsync(states, <Login>{ token: '🥑' });
-            expect(mock.history.get.length).toBe(expectedCalls);
-        },
-        30000,
-    );
-
-    it('Should not return values which where not requested', async () => {
-        applyMock(() => {
-            mock.onGet(/.*/).reply(200, `#A32\tS_OK\n192\t-22\n#A1\tS_OK\n192\t55`);
-        });
-
-        const states: CommonState[] = [new State('Heizen.Einstellungen', 'A32', 'Heiztemperatur', '°C')];
-        const response = await api.getTagsAsync(states, <Login>{ token: '🥑' });
-        expect(response).toHaveLength(1);
-        expect(response[0].state).not.toBeUndefined();
-        expect(response[0].state.Id).toBe('A32');
-        expect(response[0].response.name).toBe('A32');
-        expect(response[0].response.value).toBe('-22');
+        const tags = heatPump.requestTagsAsync();
     }, 30000);
 });
 

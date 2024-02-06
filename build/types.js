@@ -33,26 +33,25 @@ __export(types_exports, {
 });
 module.exports = __toCommonJS(types_exports);
 class CommonState {
+  constructor(Path, Id, Text, Unit, Readonly = true, ValueMap = [], Type = "number") {
+    this.Path = Path;
+    this.Id = Id;
+    this.Text = Text;
+    this.Unit = Unit;
+    this.Readonly = Readonly;
+    this.ValueMap = ValueMap;
+    this.Type = Type;
+  }
   static ID_PARTS_REGEXP = /(?<qualifier>[a-z])(?<number>\d+)/gim;
   type = "CommonState";
-  Path;
-  Id;
-  Readonly;
-  Unit;
-  Text;
-  Type;
-  ValueMap;
   idParts = void 0;
-  constructor(path, id, text, unit, readonly = true, valueMap = [], type = "number") {
-    this.Path = path;
-    this.Id = id;
-    this.Text = text;
-    this.Unit = unit;
-    this.Readonly = readonly;
-    this.ValueMap = valueMap;
-    this.Type = type;
+  getIdParts() {
+    if (!this.idParts) {
+      this.idParts = this.doGetIdParts(this.Id);
+    }
+    return this.idParts;
   }
-  static getIdParts(id) {
+  doGetIdParts(id) {
     var _a, _b, _c;
     const groups = (_c = (_b = (_a = id.matchAll(CommonState.ID_PARTS_REGEXP)) == null ? void 0 : _a.next()) == null ? void 0 : _b.value) == null ? void 0 : _c.groups;
     if (!groups) {
@@ -85,7 +84,7 @@ class CommonState {
     return common;
   }
   normalizeValue(value) {
-    switch (this.Id[0]) {
+    switch (this.getIdParts().Qualifier) {
       case "D":
         return this.toBoolean(value);
       case "A":
@@ -124,14 +123,17 @@ class CommonState {
 }
 class HexAnalogState extends CommonState {
   constructor(path, idPrimary, idSecondary, text) {
-    if (CommonState.getIdParts(idPrimary).Qualifier !== "A" || CommonState.getIdParts(idSecondary).Qualifier !== "A") {
-      throw new AdapterError(`Only analog values can be hex (${idPrimary}, ${idSecondary})`);
-    }
     super(path, idPrimary, text, "kWh", true, [], "number");
     this.idPrimary = idPrimary;
     this.idSecondary = idSecondary;
+    if (!this.hasValidIds(idPrimary, idSecondary)) {
+      throw new AdapterError(`Only analog values can be hex (${idPrimary}, ${idSecondary})`);
+    }
   }
   type = "HexAnalogState";
+  hasValidIds(primaryId, secondaryId) {
+    return this.doGetIdParts(primaryId).Qualifier === "A" && this.doGetIdParts(secondaryId).Qualifier == "A";
+  }
   normalizeHexValue(firstValue, secondaryValue) {
     if (!firstValue || !secondaryValue) {
       throw new AdapterError(

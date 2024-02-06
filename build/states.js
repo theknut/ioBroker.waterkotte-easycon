@@ -23,11 +23,11 @@ __export(states_exports, {
 module.exports = __toCommonJS(states_exports);
 var import_dictionary = require("./dictionary");
 var import_types = require("./types");
-function getStates(pollStatesOf) {
+function getStates(pollStatesOf, language = "en") {
   const states = [];
   const dict = new import_dictionary.WaterkotteDictionary();
   if (pollStatesOf.includes("Heizen")) {
-    const heatingSettings = dict.getTranslations("Heat", "Settings");
+    const heatingSettings = dict.getTranslations(["Heat", "Settings"], language);
     states.push(
       new import_types.EnumState(
         heatingSettings,
@@ -37,33 +37,36 @@ function getStates(pollStatesOf) {
         "\xB0C"
       )
     );
-    states.push(new import_types.State("Heizen.Einstellungen", "A32", dict.getTranslation("A32"), "\xB0C"));
-    states.push(new import_types.EnumState("Heizen.Einstellungen", "I30", dict.getTranslation("I30"), dict.offAutoManuell));
-    states.push(new import_types.ReadOnlyState("Heizen.Einstellungen", "A30", dict.getTranslation("A30"), "\xB0C"));
-    states.push(new import_types.ReadOnlyState("Heizen.Einstellungen", "A31", dict.getTranslation("A31"), "\xB0C"));
-    states.push(new import_types.State("Heizen.Einstellungen", "A61", dict.getTranslation("A61"), "K"));
-    states.push(new import_types.ReadOnlyState("Heizen.Kennlinie", "A90", dict.getTranslation("A90"), "\xB0C"));
-    states.push(new import_types.State("Heizen.Kennlinie", "A93", dict.getTranslation("A93"), "\xB0C"));
-    states.push(new import_types.State("Heizen.Kennlinie", "A94", dict.getTranslation("A94"), "\xB0C"));
-    states.push(new import_types.State("Heizen.Kennlinie", "A91", dict.getTranslation("A91"), "\xB0C"));
-    states.push(new import_types.State("Heizen.Kennlinie", "A92", dict.getTranslation("A92"), "\xB0C"));
-    states.push(new import_types.ReadOnlyState("Heizen.Kennlinie", "A96", dict.getTranslation("A96"), "\xB0C"));
-    states.push(new import_types.ReadOnlyState("Heizen.Raumeinfluss", "A98", dict.getTranslation("A98"), "\xB0C"));
-    states.push(new import_types.State("Heizen.Raumeinfluss", "A100", dict.getTranslation("A100"), "\xB0C"));
+    states.push(new import_types.State(heatingSettings, "A32", dict.getTranslation("A32"), "\xB0C"));
+    states.push(new import_types.EnumState(heatingSettings, "I30", dict.getTranslation("I30"), dict.offAutoManuell));
+    states.push(new import_types.ReadOnlyState(heatingSettings, "A30", dict.getTranslation("A30"), "\xB0C"));
+    states.push(new import_types.ReadOnlyState(heatingSettings, "A31", dict.getTranslation("A31"), "\xB0C"));
+    states.push(new import_types.State(heatingSettings, "A61", dict.getTranslation("A61"), "K"));
+    const heatingCurve = dict.getTranslations(["Heat", "Curve"], language);
+    states.push(new import_types.ReadOnlyState(heatingCurve, "A90", dict.getTranslation("A90"), "\xB0C"));
+    states.push(new import_types.State(heatingCurve, "A93", dict.getTranslation("A93"), "\xB0C"));
+    states.push(new import_types.State(heatingCurve, "A94", dict.getTranslation("A94"), "\xB0C"));
+    states.push(new import_types.State(heatingCurve, "A91", dict.getTranslation("A91"), "\xB0C"));
+    states.push(new import_types.State(heatingCurve, "A92", dict.getTranslation("A92"), "\xB0C"));
+    states.push(new import_types.ReadOnlyState(heatingCurve, "A96", dict.getTranslation("A96"), "\xB0C"));
+    const heatingInfluence = dict.getTranslations(["Heat", "Influence"], language);
+    states.push(new import_types.ReadOnlyState(heatingInfluence, "A98", dict.getTranslation("A98"), "\xB0C"));
+    states.push(new import_types.State(heatingInfluence, "A100", dict.getTranslation("A100"), "\xB0C"));
     states.push(
       new import_types.EnumState(
-        "Heizen.Raumeinfluss",
+        heatingInfluence,
         "A101",
         dict.getTranslation("A101"),
         { 0: "0", 1: "50", 2: "100", 3: "150", 4: "200" },
         "%"
       )
     );
-    states.push(new import_types.State("Heizen.Raumeinfluss", "A102", dict.getTranslation("A102"), "K"));
-    states.push(new import_types.State("Heizen.Raumeinfluss", "A103", dict.getTranslation("A103"), "K"));
-    states.push(new import_types.ReadOnlyState("Heizen.Raumeinfluss", "A99", dict.getTranslation("A99"), "K"));
-    states.push(new import_types.IndicatorState("Heizen.Status", "I137", dict.getTranslation("I137")));
-    states.push(new import_types.IndicatorState("Heizen.Status", "D24", dict.getTranslation("D24")));
+    states.push(new import_types.State(heatingInfluence, "A102", dict.getTranslation("A102"), "K"));
+    states.push(new import_types.State(heatingInfluence, "A103", dict.getTranslation("A103"), "K"));
+    states.push(new import_types.ReadOnlyState(heatingInfluence, "A99", dict.getTranslation("A99"), "K"));
+    const heatingStatus = dict.getTranslations(["Heat    ", "Status"], language);
+    states.push(new import_types.IndicatorState(heatingStatus, "I137", dict.getTranslation("I137")));
+    states.push(new import_types.IndicatorState(heatingStatus, "D24", dict.getTranslation("D24")));
   }
   if (pollStatesOf.includes("K\xFChlen")) {
     states.push(new import_types.State("K\xFChlen.Einstellungen", "A109", dict.getTranslation("A109"), "\xB0C"));

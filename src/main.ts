@@ -5,18 +5,15 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 import * as utils from '@iobroker/adapter-core';
-import { getStates } from './states';
-import { CommonState, Login, TagResponse, WaterkotteError } from './types';
-import { WaterkotteCgi } from './waterkotte';
+import { TagResponse, WaterkotteError } from './types';
+import { WaterkotteHeatPump } from './waterkotteheatpump';
 
 // Load your modules here, e.g.:
 // import * as fs from "fs";
 
 class WaterkotteEasycon extends utils.Adapter {
-    states: CommonState[] = [];
-    api: WaterkotteCgi | undefined;
+    api: WaterkotteHeatPump | undefined;
     updateParametersInterval: ioBroker.Interval | undefined;
-    login: Login = <Login>{};
     public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
             ...options,
@@ -34,10 +31,14 @@ class WaterkotteEasycon extends utils.Adapter {
     private async onReady(): Promise<void> {
         this.setStateAsync('info.connection', false, true);
 
-        this.api = new WaterkotteCgi(this.config.ipAddress, this.log);
+        this.api = new WaterkotteHeatPump(this.config.ipAddress, this.log);
 
         try {
-            this.login = await this.api.loginAsync(this.config.username, this.config.password);
+            if (!(await this.api.connect(this.config.username, this.config.password))) {
+                await this.setMessageStateAsync('Unable to connect');
+                return;
+            }
+
             this.log.debug('Successfully logged in');
             await this.setStateAsync('info.connection', true, true);
             await this.setMessageStateAsync('');
@@ -53,30 +54,21 @@ class WaterkotteEasycon extends utils.Adapter {
             return;
         }
 
-        this.states = getStates(
-            this.config.pollStatesOf ?? ['Heizen', 'Kühlen', 'Wasser', 'Energiebilanz', 'Messwerte', 'Status'],
-            this.language,
-        );
-
-        await this.updateParametersAsync(this.states);
-        const interval = this.setInterval(
-            async (states) => await this.updateParametersAsync(states as CommonState[]),
-            this.config.pollingInterval,
-            this.states,
-        );
+        await this.updateParametersAsync();
+        const interval = this.setInterval(async () => await this.updateParametersAsync(), this.config.pollingInterval);
 
         if (interval) {
             this.updateParametersInterval = interval;
         }
     }
 
-    private async updateParametersAsync(states: CommonState[]): Promise<void> {
+    private async updateParametersAsync(): Promise<void> {
         if (!this.api) {
             throw new Error('Unable to update parameters because api has not been initialized');
         }
 
         try {
-            const tagResponses = await this.api.getTagsAsync(states, this.login);
+            const tagResponses = await this.api.requestTagsAsync();
 
             for (const tagResponse of tagResponses) {
                 if (tagResponse.response.status != TagResponse.STATUS_OK) {
@@ -136,7 +128,7 @@ class WaterkotteEasycon extends utils.Adapter {
         try {
             clearInterval(this.updateParametersInterval);
             try {
-                this.api?.logoutAsync().then().finally();
+                this.api?.disconect().then().finally();
             } catch {} // fire and forget
 
             callback();
