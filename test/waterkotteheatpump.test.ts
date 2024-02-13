@@ -1,16 +1,20 @@
 import { expect } from '@jest/globals';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+import { WaterkotteError } from '../src/types';
 import { WaterkotteHeatPump } from '../src/waterkotteheatpump';
 
-let useMocks = false;
+// don't run all tests with useMocks = true
+// the api will return #E_TOO_MANY_USERS for a couple of minutes
+let useMocks = true;
 
 let heatPump: WaterkotteHeatPump;
 let anyApi: any;
 let mock: MockAdapter;
 
 beforeEach(() => {
-    heatPump = new WaterkotteHeatPump('192.168.178.46', console);
+    heatPump = new WaterkotteHeatPump('192.168.178.46', 'waterkotte', 'waterkotte', console);
+    anyApi = heatPump;
     if (useMocks) {
         mock = new MockAdapter(axios);
     }
@@ -22,13 +26,166 @@ afterEach(() => {
     }
 });
 
-describe('Waterkotte Heat Pump - login', () => {
+describe('Waterkotte Heat Pump - login / logout', () => {
     it('Should login with proper credentials', async () => {
-        const login = await heatPump.connect();
+        mockLogin();
+        const login = await heatPump.connectAsync();
         expect(login).toBeTruthy();
-
-        const tags = heatPump.requestTagsAsync();
     }, 30000);
+
+    it('Should logout', async () => {
+        expect(useMocks).toBeTruthy();
+
+        const data = '1\n#S_OK';
+        mock.onGet(/.*logout/).reply(200, data);
+
+        const response = await heatPump.disconnectAsync();
+        expect(response).toBeTruthy();
+    }, 30000);
+
+    it('Should return error when logout fails', async () => {
+        expect(useMocks).toBeTruthy();
+
+        const data = '#E_NEED_LOGIN';
+        mock.onGet(/.*logout/).reply(200, data);
+
+        const response = await heatPump.disconnectAsync();
+        expect(response).toBeInstanceOf(WaterkotteError);
+    }, 30000);
+
+    it('Should not login with wrong credentials', async () => {
+        applyMock(() => {
+            const data = '-49\n#E_USER_DONT_EXIST';
+            mock.onGet(/.*/).reply(200, data);
+        });
+
+        const api = new WaterkotteHeatPump('192.168.178.46', 'john doe', 'jane', console);
+        const error = await api.connectAsync();
+        expect(error).toBeInstanceOf(WaterkotteError);
+        const waterkotteError = error as WaterkotteError;
+
+        expect(waterkotteError.message).toEqual('#E_USER_DONT_EXIST');
+        expect(waterkotteError.code).toBe(-49);
+    }, 30000);
+
+    it('Should login if not connected yet', async () => {
+        expect(useMocks).toBeTruthy();
+
+        mockLogin();
+        applyMock(() => {
+            mock.onGet(/.*readTags\?.*/).reply(200, requestedTagsResponse);
+        });
+
+        await heatPump.requestTagsAsync();
+
+        expect(mock.history.get.length).toBe(3);
+        let loginRequest = mock.history.get[0];
+        expect(loginRequest.url?.includes('login')).toBeTruthy();
+        let activeServicesRequest = mock.history.get[1];
+        expect(activeServicesRequest.url?.includes('readTags')).toBeTruthy();
+        expect(activeServicesRequest.url?.includes('D23')).toBeTruthy();
+        let getTagsRequest = mock.history.get[2];
+        expect(getTagsRequest.url?.includes('readTags')).toBeTruthy();
+    }, 30000);
+
+    it('Should re-login if token is expired', async () => {
+        expect(useMocks).toBeTruthy();
+
+        mockLogin();
+        applyMock(() => {
+            mock.onGet(/.*readTags\?.*/).reply(200, requestedTagsResponse);
+        });
+
+        await heatPump.requestTagsAsync();
+
+        expect(mock.history.get.length).toBe(3); // login, services, data
+
+        mock.reset();
+
+        mockLogin();
+        applyMock(() => {
+            let onGetCount = 0;
+            mock.onGet(/.*readTags\?.*/).reply(function (response) {
+                if (onGetCount == 0) {
+                    onGetCount++;
+                    return [200, WaterkotteError.NEED_LOGIN_MSG];
+                } else if (onGetCount == 1) {
+                    onGetCount++;
+                    return [200, requestedTagsResponse];
+                } else {
+                    throw new Error('Too many calls');
+                }
+            });
+        });
+
+        const response = await heatPump.requestTagsAsync();
+        expect(response).not.toHaveLength(0);
+    }, 30000);
+});
+
+describe('Waterkotte Heat Pump - requestTagsAsync', () => {
+    it('Should skip if too many users', async () => {
+        expect(useMocks).toBeTruthy();
+
+        mockLogin();
+        applyMock(() => {
+            mock.onGet(/.*readTags\?.*/).reply(200, `${WaterkotteError.TOO_MANY_USERS}\n#E_TOO_MANY_USERS`);
+        });
+
+        const response = await heatPump.requestTagsAsync();
+        expect(response).toHaveLength(0);
+    }, 30000);
+
+    it('Should save credentials after successful login', async () => {
+        expect(useMocks).toBeTruthy();
+
+        mockLogin();
+        applyMock(() => {
+            mock.onGet(/.*readTags\?.*/).reply(200, requestedTagsResponse);
+        });
+
+        await heatPump.requestTagsAsync();
+        await heatPump.requestTagsAsync();
+
+        expect(mock.history.get.filter((x) => x.url?.includes('login'))).toHaveLength(1);
+    }, 30000);
+
+    it('Should get requested tags', async () => {
+        expect(useMocks).toBeTruthy();
+
+        mockLogin();
+        applyMock(() => {
+            let onGetCount = 0;
+            mock.onGet(/.*readTags\?.*/).reply(function (response) {
+                if (onGetCount == 0) {
+                    onGetCount++;
+                    return [200, getServicesReponse];
+                } else if (onGetCount == 1 || onGetCount == 2) {
+                    // tags are split into two calls
+                    onGetCount++;
+                    return [200, requestedTagsResponse];
+                } else {
+                    throw new Error('Too many calls');
+                }
+            });
+        });
+
+        await heatPump.requestTagsAsync();
+    }, 30000);
+
+    it('Should rethrow errors', async () => {
+        expect(useMocks).toBeTruthy();
+
+        const data = 'Request failed with status code 404';
+        mock.onGet(/.*/).reply(404, data);
+
+        try {
+            await heatPump.requestTagsAsync();
+            throw new Error('Connecting to wrong IP address did not throw error');
+        } catch (e: unknown) {
+            console.log('');
+        }
+    });
 });
 
 function applyMock(onMock: () => void) {
@@ -42,30 +199,37 @@ function mockLogin(returnCookie: boolean = true) {
         applyMock(() => {
             const data = '1\n#S_OK\nIDALToken=454c65c6d74cbdd3a60ae7d548aff5a6';
             const headers: any = {
-                'set-cookie': [`${anyApi.cookieName}=😘;`],
+                'set-cookie': [`${anyApi.api.cookieName}=😘;`],
             };
             mock.onGet(/.*login\?.*/).reply(200, data, returnCookie ? headers : {});
         });
     }
 }
 
-const tagResponseWithUnknownTag = `
-#A1	S_OK
-192	-5
-#I2017	S_OK
-192	99
-#I139	S_OK
+const getActiveServicesResponse = `
+#D23	S_OK
+192	1
+#D74	S_OK
+192	1
+#D117	S_OK
+192	1
+#D160	S_OK
 192	0
-#A101	S_OK
+#D196	S_OK
 192	0
-#BEEF	E_UNKNOWNTAG
-#A3	S_OK
-192	-4
-#D581   S_OK
-192     1
+#D248	S_OK
+192	0
+#D291	S_OK
+192	0
+#D334	S_OK
+192	0
+#D232	S_OK
+192	1
+#D377	S_OK
+192	0
+#D635	S_OK
+192	1
 `;
-
-const requestedTags = `[{"type":"EnumState","Path":"Heizen.Einstellungen","Id":"I263","Readonly":false,"Unit":"°C","Text":{"de":"Temperaturanpassung","en":"Temperature adjustment","fr":"Adaptation de température"},"Type":"number","ValueMap":{"0":"-2.0","1":"-1.5","2":"-1.0","3":"-0.5","4":"0.0","5":"0.5","6":"1.0","7":"1.5","8":"2.0"}},{"type":"State","Path":"Heizen.Einstellungen","Id":"A32","Readonly":false,"Unit":"°C","Text":{"de":"Heiztemperatur","en":"Heiztemperatur","fr":"Heiztemperatur"},"Type":"number","ValueMap":[]},{"type":"EnumState","Path":"Heizen.Einstellungen","Id":"I30","Readonly":false,"Text":{"de":"Betriebsmodus","en":"Betriebsmodus","fr":"Betriebsmodus"},"Type":"number","ValueMap":{"0":"Off","1":"Auto","2":"Manual"}},{"type":"ReadOnlyState","Path":"Heizen.Einstellungen","Id":"A30","Readonly":true,"Unit":"°C","Text":{"de":"aktuelle Temperatur","en":"Current temperature","fr":"Température actuelle"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Heizen.Einstellungen","Id":"A31","Readonly":true,"Unit":"°C","Text":{"de":"geforderte Temperatur","en":"Required temperature","fr":"Température de consigne"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Heizen.Einstellungen","Id":"A61","Readonly":false,"Unit":"K","Text":{"de":"Schaltdifferenz Sollwert","en":"Target value switching difference","fr":"Hystérésis consigne"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Heizen.Kennlinie","Id":"A90","Readonly":true,"Unit":"°C","Text":{"de":"T Außen Ø1h","en":"T External Ø1h","fr":"T extérieure Ø1h"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Heizen.Kennlinie","Id":"A93","Readonly":false,"Unit":"°C","Text":{"de":"T Heizgrenze","en":"T out begin","fr":"T encl. ext."},"Type":"number","ValueMap":[]},{"type":"State","Path":"Heizen.Kennlinie","Id":"A94","Readonly":false,"Unit":"°C","Text":{"de":"T Heizgrenze Soll","en":"T base setpoint","fr":"T encl. chauffage"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Heizen.Kennlinie","Id":"A91","Readonly":false,"Unit":"°C","Text":{"de":"T Norm-Außen","en":"T outdoor norm","fr":"T base-ext."},"Type":"number","ValueMap":[]},{"type":"State","Path":"Heizen.Kennlinie","Id":"A92","Readonly":false,"Unit":"°C","Text":{"de":"T Heizkreis Norm","en":"T heat norm","fr":"T base-chauf.fage"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Heizen.Kennlinie","Id":"A96","Readonly":true,"Unit":"°C","Text":{"de":"Temperatur Soll","en":"Temp. calc.","fr":"Temp. consigne"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Heizen.Raumeinfluss","Id":"A98","Readonly":true,"Unit":"°C","Text":{"de":"Raumtemperatur &Oslash;1h","en":"T room 1h","fr":"T-pièce 1h"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Heizen.Raumeinfluss","Id":"A100","Readonly":false,"Unit":"°C","Text":{"de":"Raumtemperatur Soll","en":"T room setpoint","fr":"T-pièce consigne"},"Type":"number","ValueMap":[]},{"type":"EnumState","Path":"Heizen.Raumeinfluss","Id":"A101","Readonly":false,"Unit":"%","Text":{"de":"Raumeinfluss","en":"Room influence","fr":"Influence pièce"},"Type":"number","ValueMap":{"0":"0","1":"50","2":"100","3":"150","4":"200"}},{"type":"State","Path":"Heizen.Raumeinfluss","Id":"A102","Readonly":false,"Unit":"K","Text":{"de":"kleinster Wert","en":"kleinster Wert","fr":"kleinster Wert"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Heizen.Raumeinfluss","Id":"A103","Readonly":false,"Unit":"K","Text":{"de":"grösster Wert","en":"grösster Wert","fr":"grösster Wert"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Heizen.Raumeinfluss","Id":"A99","Readonly":true,"Unit":"K","Text":{"de":"aktueller Wert","en":"aktueller Wert","fr":"aktueller Wert"},"Type":"number","ValueMap":[]},{"type":"Indicator","Path":"Heizen.Status","Id":"I137","Readonly":true,"Text":{"de":"Heizbetrieb","en":"Heating","fr":"Chauffage"},"Type":"boolean","ValueMap":[]},{"type":"Indicator","Path":"Heizen.Status","Id":"D24","Readonly":true,"Text":{"de":"Zeitprogramm","en":"Zeitprogramm","fr":"Zeitprogramm"},"Type":"boolean","ValueMap":[]},{"type":"State","Path":"Kühlen.Einstellungen","Id":"A109","Readonly":false,"Unit":"°C","Text":{"de":"Kühltemperatur","en":"T Cooling","fr":"T Rafraichissement"},"Type":"number","ValueMap":[]},{"type":"EnumState","Path":"Kühlen.Einstellungen","Id":"I31","Readonly":false,"Text":{"de":"Betriebsmodus","en":"Betriebsmodus","fr":"Betriebsmodus"},"Type":"number","ValueMap":{"0":"Off","1":"Auto","2":"Manual"}},{"type":"ReadOnlyState","Path":"Kühlen.Einstellungen","Id":"A33","Readonly":true,"Unit":"°C","Text":{"de":"aktuelle Temperatur","en":"Current temperature","fr":"Température actuelle"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Kühlen.Einstellungen","Id":"A34","Readonly":true,"Unit":"°C","Text":{"de":"geforderte Temperatur","en":"Required temperature","fr":"Température de consigne"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Kühlen.Einstellungen","Id":"A108","Readonly":false,"Unit":"°C","Text":{"de":"T Au&szlig;en Einsatzgrenze","en":"T out begin","fr":"T extérieure limite d'application"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Kühlen.Einstellungen","Id":"A107","Readonly":false,"Unit":"K","Text":{"de":"Schaltdifferenz Sollwert","en":"Hysteresis","fr":"Hystérésis Consigne"},"Type":"number","ValueMap":[]},{"type":"Indicator","Path":"Kühlen.Status","Id":"I138","Readonly":true,"Text":{"de":"Kühlung","en":"Cooling","fr":"Rafraichissement"},"Type":"boolean","ValueMap":[]},{"type":"Indicator","Path":"Kühlen.Status","Id":"D75","Readonly":true,"Text":"D75","Type":"boolean","ValueMap":[]},{"type":"State","Path":"Wasser.Einstellungen","Id":"A38","Readonly":false,"Unit":"°C","Text":{"de":"Sollwert","en":"Target value","fr":"Consigne"},"Type":"number","ValueMap":[]},{"type":"EnumState","Path":"Wasser.Einstellungen","Id":"I32","Readonly":false,"Text":{"de":"Betriebsmodus","en":"Betriebsmodus","fr":"Betriebsmodus"},"Type":"number","ValueMap":{"0":"Off","1":"Auto","2":"Manual"}},{"type":"ReadOnlyState","Path":"Wasser.Einstellungen","Id":"A19","Readonly":true,"Unit":"°C","Text":{"de":"Temperatur Warmwasser","en":"Actual temperature","fr":"Température actuelle"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Wasser.Einstellungen","Id":"A37","Readonly":true,"Unit":"°C","Text":{"de":"geforderte Temperatur","en":"Required temperature","fr":"Température de consigne"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Wasser.Einstellungen","Id":"A139","Readonly":false,"Unit":"K","Text":{"de":"Schaltdifferenz Sollwert","en":"Target value switching difference","fr":"Hystérésis consigne"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Wasser.ThermischeDesinfektion","Id":"A168","Readonly":false,"Unit":"°C","Text":{"de":"geforderte Temperatur","en":"Required temperature","fr":"Température de consigne"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Wasser.ThermischeDesinfektion","Id":"I505","Readonly":true,"Text":{"de":"Startzeit","en":"Start time","fr":"Début"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Wasser.ThermischeDesinfektion","Id":"I507","Readonly":false,"Unit":"h","Text":{"de":"max.Laufzeit","en":"Max. runtime for","fr":"Temps d'exéc. maxi."},"Type":"number","ValueMap":[]},{"type":"EnumState","Path":"Wasser.ThermischeDesinfektion","Id":"I508","Readonly":false,"Text":{"de":"Wochenprogramm","en":"Schedule","fr":"Programme hebdomadaire"},"Type":"number","ValueMap":{"0":"None","1":"Day","2":"All"}},{"type":"State","Path":"Wasser.Solarunterstützung","Id":"I508","Readonly":false,"Unit":"°C","Text":{"de":"Wochenprogramm","en":"Schedule","fr":"Programme hebdomadaire"},"Type":"number","ValueMap":[]},{"type":"State","Path":"Wasser.Solarunterstützung","Id":"I517","Readonly":false,"Text":{"de":"Verzögerung Kompressorstart","en":"Delay for compressor during solar heating","fr":"Temps de retard pour Start compresseur"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Wasser.Solarunterstützung","Id":"I518","Readonly":true,"Text":{"de":"Zeit bis Kompressorstart","en":"Compressor starting in...","fr":"Le compresseur démarre dans"},"Type":"number","ValueMap":[]},{"type":"Indicator","Path":"Wasser.Status","Id":"I139","Readonly":true,"Text":{"de":"Warmwasser","en":"Hot water","fr":"ECS"},"Type":"boolean","ValueMap":[]},{"type":"Indicator","Path":"Wasser.Status","Id":"D118","Readonly":true,"Text":"D118","Type":"boolean","ValueMap":[]},{"type":"ReadOnlyState","Path":"Energiebilanz.Leistungsbilanz","Id":"A25","Readonly":true,"Unit":"kW","Text":{"de":"Elektrische Leistung","en":"Electrical energy","fr":"Puissance électrique"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Energiebilanz.Leistungsbilanz","Id":"A26","Readonly":true,"Unit":"kW","Text":{"de":"Thermische Leistung","en":"Thermal energy","fr":"Puissance thermique"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Energiebilanz.Leistungsbilanz","Id":"A28","Readonly":true,"Text":{"de":"COP","en":"COP","fr":"COP"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Energiebilanz.Leistungsbilanz","Id":"A27","Readonly":true,"Unit":"kW","Text":{"de":"Kälteleistung","en":"Cooling energy","fr":"Puissance frigorifique"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Energiebilanz.Leistungsbilanz","Id":"A29","Readonly":true,"Text":{"de":"COP Kälteleistung","en":"COP cooling output","fr":"EER"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A1","Readonly":true,"Unit":"°C","Text":{"de":"Außentemperatur","en":"Ext. temperature","fr":"Température extérieure"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A2","Readonly":true,"Unit":"°C","Text":{"de":"Außentemperatur &Oslash;1h","en":"Ext.temperature 1h","fr":"Température extérieure 1h"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A3","Readonly":true,"Unit":"°C","Text":{"de":"Außentemperatur &Oslash;24h","en":"Ext.temperature 24h","fr":"Température extérieure 24h"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A4","Readonly":true,"Unit":"°C","Text":{"de":"T Quelle Ein","en":"T Source In","fr":"T entrée captage"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A5","Readonly":true,"Unit":"°C","Text":{"de":"T Quelle Aus","en":"T Source Out","fr":"T sortie captage"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A6","Readonly":true,"Unit":"°C","Text":{"de":"T Verdampfer","en":"T Evaporation","fr":"T évaporation"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A7","Readonly":true,"Unit":"°C","Text":{"de":"T Saugleitung","en":"T Suction line","fr":"T gaz aspiré"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A8","Readonly":true,"Unit":"°C","Text":{"de":"p Verdampfer","en":"p Evaporation","fr":"p évaporation"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A10","Readonly":true,"Unit":"°C","Text":{"de":"T Sollwert","en":"T Sollwert","fr":"T Sollwert"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A699","Readonly":true,"Unit":"°C","Text":"A699","Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A700","Readonly":true,"Unit":"°C","Text":"A700","Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A701","Readonly":true,"Unit":"°C","Text":"A701","Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A702","Readonly":true,"Unit":"°C","Text":"A702","Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A12","Readonly":true,"Unit":"°C","Text":{"de":"T Vorlauf","en":"T flow","fr":"T départ"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2017","Readonly":true,"Unit":"bar","Text":{"de":"p1 Sauggas","en":"p1 Sauggas","fr":"p1 Sauggas"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2018","Readonly":true,"Unit":"bar","Text":{"de":"p2 Austritt","en":"p2 Austritt","fr":"p2 Austritt"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2019","Readonly":true,"Unit":"bar","Text":{"de":"p3 Zwischeneinspritzung","en":"p3 Zwischeneinspritzung","fr":"p3 Zwischeneinspritzung"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2020","Readonly":true,"Unit":"°C","Text":{"de":"T2 Umgebung","en":"T2 Umgebung","fr":"T2 Umgebung"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2021","Readonly":true,"Unit":"°C","Text":{"de":"T3 Sauggas","en":"T3 Sauggas","fr":"T3 Sauggas"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2022","Readonly":true,"Unit":"°C","Text":{"de":"T4 Verdichter","en":"T4 Verdichter","fr":"T4 Verdichter"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2025","Readonly":true,"Unit":"°C","Text":{"de":"T5 EVI","en":"T5 EVI","fr":"T5 EVI"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2024","Readonly":true,"Unit":"°C","Text":{"de":"T6 Flüssig","en":"T6 Flüssig","fr":"T6 Flüssig"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2023","Readonly":true,"Unit":"°C","Text":{"de":"T7 Ölsumpf","en":"T7 Ölsumpf","fr":"T7 Ölsumpf"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2032","Readonly":true,"Unit":"°C","Text":{"de":"T Verdampfer","en":"T Verdampfer","fr":"T Verdampfer"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2033","Readonly":true,"Unit":"K","Text":{"de":"Überhitzung","en":"Überhitzung","fr":"Überhitzung"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2034","Readonly":true,"Unit":"°C","Text":{"de":"T Kondensation","en":"T Kondensation","fr":"T Kondensation"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"I2039","Readonly":true,"Unit":"°C","Text":{"de":"T Druckgas","en":"T Druckgas","fr":"T Druckgas"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A13","Readonly":true,"Unit":"°C","Text":{"de":"T Kondensation","en":"T Condensation","fr":"T condensation"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A14","Readonly":true,"Unit":"°C","Text":{"de":"Tc Bubble-Point","en":"T Bubble Point","fr":"T Bubble Point"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A15","Readonly":true,"Unit":"bar","Text":{"de":"p Kondensator","en":"p Condensation","fr":"p condensation"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A17","Readonly":true,"Unit":"°C","Text":{"de":"Temperatur Raum","en":"Room temperature","fr":"Température pièce pilote"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A18","Readonly":true,"Unit":"°C","Text":{"de":"Temperatur Raum &Oslash;1h","en":"Temperatur Raum &Oslash;1h","fr":"Temperatur Raum &Oslash;1h"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A19","Readonly":true,"Unit":"°C","Text":{"de":"Temperatur Warmwasser","en":"Actual temperature","fr":"Température actuelle"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A20","Readonly":true,"Unit":"°C","Text":{"de":"Temperatur Pool","en":"Current temperature","fr":"Température actuelle"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A21","Readonly":true,"Unit":"°C","Text":{"de":"Temperatur Solar","en":"Temperatur Solar","fr":"Temperatur Solar"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A16","Readonly":true,"Unit":"°C","Text":{"de":"Temperatur Pufferspeicher","en":"Temperatur Pufferspeicher","fr":"Temperatur Pufferspeicher"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A1022","Readonly":true,"Unit":"l/s","Text":{"de":"Durchfluss (Vortex Sensor)","en":"Durchfluss (Vortex Sensor)","fr":"Durchfluss (Vortex Sensor)"},"Type":"number","ValueMap":[]},{"type":"ReadOnlyState","Path":"Messwerte","Id":"A1023","Readonly":true,"Unit":"°C","Text":{"de":"Temperatur (Vortex Sensor)","en":"Temperatur (Vortex Sensor)","fr":"Temperatur (Vortex Sensor)"},"Type":"number","ValueMap":[]},{"type":"Indicator","Path":"Status","Id":"D581","Readonly":true,"Text":{"de":"Externe Abschaltung","en":"Ext. off","fr":"Coupure externe"},"Type":"boolean","ValueMap":[]},{"type":"Indicator","Path":"Status","Id":"D701","Readonly":true,"Text":"D701","Type":"boolean","ValueMap":[]}]`;
 
 const requestedTagsResponse = `#I263       S_OK
 192     3
@@ -239,3 +403,28 @@ const requestedTagsResponse = `#I263       S_OK
 192     0
 #D581   S_OK
 192     1`;
+
+const getServicesReponse = `
+#D23	S_OK
+192	1
+#D74	S_OK
+192	1
+#D117	S_OK
+192	1
+#D160	S_OK
+192	0
+#D196	S_OK
+192	0
+#D248	S_OK
+192	0
+#D291	S_OK
+192	0
+#D334	S_OK
+192	0
+#D232	S_OK
+192	1
+#D377	S_OK
+192	0
+#D635	S_OK
+192	1
+`;

@@ -249,11 +249,24 @@ export class WaterkotteError extends Error {
     static TOO_MANY_USERS = -37;
     static USER_DOES_NOT_EXIST = -49;
     static PASS_DONT_MATCH = -45;
+    static LOGIN_REQUIRED = -88;
+    static NEED_LOGIN_MSG = '#E_NEED_LOGIN';
+    static RELOGIN_ATTEMPT_MSG = '#E_RE-LOGIN_ATTEMPT';
+    static ERROR_INDICATOR = '#E_';
+
     constructor(
-        public code: number,
         message: string,
+        public code?: number,
     ) {
         super(message);
+
+        if (code === undefined) {
+            switch (message) {
+                case WaterkotteError.NEED_LOGIN_MSG:
+                    this.code = WaterkotteError.LOGIN_REQUIRED;
+                    break;
+            }
+        }
     }
 }
 
@@ -264,7 +277,10 @@ export class AdapterError extends Error {
 }
 
 export class RethrowError extends AdapterError {
-    constructor(innerError: Error, message: string = innerError.message) {
+    constructor(
+        public innerError: Error,
+        message: string = innerError.message,
+    ) {
         super(message);
     }
 }

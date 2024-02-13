@@ -193,13 +193,24 @@ class UnknownTagResponse extends TagResponse {
   }
 }
 class WaterkotteError extends Error {
-  constructor(code, message) {
+  constructor(message, code) {
     super(message);
     this.code = code;
+    if (code === void 0) {
+      switch (message) {
+        case WaterkotteError.NEED_LOGIN_MSG:
+          this.code = WaterkotteError.LOGIN_REQUIRED;
+          break;
+      }
+    }
   }
   static TOO_MANY_USERS = -37;
   static USER_DOES_NOT_EXIST = -49;
   static PASS_DONT_MATCH = -45;
+  static LOGIN_REQUIRED = -88;
+  static NEED_LOGIN_MSG = "#E_NEED_LOGIN";
+  static RELOGIN_ATTEMPT_MSG = "#E_RE-LOGIN_ATTEMPT";
+  static ERROR_INDICATOR = "#E_";
 }
 class AdapterError extends Error {
   constructor(message) {
@@ -209,6 +220,7 @@ class AdapterError extends Error {
 class RethrowError extends AdapterError {
   constructor(innerError, message = innerError.message) {
     super(message);
+    this.innerError = innerError;
   }
 }
 // Annotate the CommonJS export names for ESM import in node:

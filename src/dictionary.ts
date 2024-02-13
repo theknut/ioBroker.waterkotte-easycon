@@ -7,35 +7,36 @@ export class WaterkotteDictionary {
 
     constructor(private forbiddenChars?: RegExp) {}
 
-    getTranslations(identifiers: string | string[], language: ioBroker.Languages): string {
+    getTranslations(identifiers: string | string[], language: ioBroker.Languages, separator: string = '.'): string {
         if (!language) {
             throw new AdapterError(`Could not get '${language}' translation for ${identifiers}`);
         }
 
-        const translated = this.getTranslation(identifiers);
+        const translated = this.getTranslation(identifiers, separator);
         const translatedLanguage = translated[language] ?? translated['en'];
         if (!translatedLanguage) {
-            throw new AdapterError(`Could not get '${language}' translation for ${identifiers}`);
+            throw new AdapterError(`Could neither get '${language}' nor 'en' translation for ${identifiers}`);
         }
         return translatedLanguage;
     }
 
-    getTranslation(identifiers: string | string[]): ioBroker.Translated {
+    getTranslation(identifiers: string | string[], separator: string = '.'): ioBroker.Translated {
         const translated = this.toStringOrTranslated(
             (typeof identifiers === 'string' ? [identifiers] : identifiers).map((identifier) => {
                 const dict = this['lng' + identifier] as string[];
                 return Array.isArray(dict) ? dict : [identifier];
             }),
+            separator,
         );
 
         return translated;
     }
 
-    private toStringOrTranslated(dicts: string[][]): ioBroker.Translated {
+    private toStringOrTranslated(dicts: string[][], separator: string = '.'): ioBroker.Translated {
         return <ioBroker.Translated>{
-            de: dicts.map((dict) => dict[0]).join('.'),
-            en: dicts.map((dict) => (dict.length > 1 ? dict[1] : dict[0])).join('.'), // fall back to German
-            fr: dicts.map((dict) => (dict.length > 2 ? dict[2] : dict.length > 1 ? dict[1] : dict[0])).join('.'), // fall back to English or German
+            de: dicts.map((dict) => dict[0]).join(separator),
+            en: dicts.map((dict) => (dict.length > 1 ? dict[1] : dict[0])).join(separator), // fall back to German
+            fr: dicts.map((dict) => (dict.length > 2 ? dict[2] : dict.length > 1 ? dict[1] : dict[0])).join(separator), // fall back to English or German
         };
     }
 
@@ -192,7 +193,8 @@ export class WaterkotteDictionary {
     lngMix = ['Mischerkreis'];
     lngTabMix = ['Mischerkreis'];
     lngStor = ['Speicherentladepumpe'];
-    lngPV = ['Photovoltaik'];
+    lngPV = ['Photovoltaik', 'PV', 'Photovolta\xefque'];
+    lngPVChange = ['\xe4nderung', 'Change', 'Changement'];
     lngPVDesc = ['Temperatur\xe4nderung ... w\xe4hrend PV-Ertrag'];
     lngComm = ['Kommunikation'];
     lngIO = ['Ein- und Ausg\xe4nge'];
@@ -2450,4 +2452,8 @@ export class WaterkotteDictionary {
         2: this.getTranslation('Manual'),
     };
     noneDayAll = { 0: this.getTranslation('None'), 1: this.getTranslation('Day'), 2: this.getTranslation('All') };
+    openClosed = {
+        0: this.getTranslation('Open'),
+        1: this.getTranslation('Closed'),
+    };
 }

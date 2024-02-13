@@ -10,12 +10,12 @@
         "username": {
             "type": "text",
             "label": "Username",
-            "default": "waterkotte",
+            "help": "Use 'waterkotte' if unknown",
             "newLine": true
         },
         "password": {
             "type": "password",
-            "default": "waterkotte",
+            "help": "Use 'waterkotte' if unknown",
             "label": "Password"
         },
         "pollingInterval": {

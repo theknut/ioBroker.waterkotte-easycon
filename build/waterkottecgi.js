@@ -22,11 +22,11 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var waterkotte_exports = {};
-__export(waterkotte_exports, {
+var waterkottecgi_exports = {};
+__export(waterkottecgi_exports, {
   WaterkotteCgi: () => WaterkotteCgi
 });
-module.exports = __toCommonJS(waterkotte_exports);
+module.exports = __toCommonJS(waterkottecgi_exports);
 var import_axios = __toESM(require("axios"));
 var import_types = require("./types");
 class WaterkotteCgi {
@@ -37,49 +37,57 @@ class WaterkotteCgi {
     this.cgiUrl = `${this.baseUrl}cgi/`;
   }
   static TAG_RESPONSE_REG_EXP = /\#(?<name>[\w\d]+)\s+(?<status>.*)\n(?:(?<unknown>\d+)\s+(?<value>.?\d+))?/gm;
-  static LOGIN_REQUEST_REG_EXP = /(?<status>-?\d+)[\n\r]+(?<message>.*)/gm;
+  static LOGIN_REQUEST_REG_EXP = /(?:(?<status>\-?\d+)[\n\r]+)?(?<message>\#.*)/gm;
   cookieName = "IDALToken";
   baseUrl;
   cgiUrl;
   maximumTagsPerRequest = 75;
   async loginAsync(username = "waterkotte", password = "waterkotte") {
-    var _a, _b, _c, _d, _e;
     const loginUrl = `${this.cgiUrl}login?username=${username}&password=${password}`;
-    const response = await this.requestAsync(loginUrl);
-    const result = (_b = (_a = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()) == null ? void 0 : _a.value) == null ? void 0 : _b.groups;
-    switch (Number(result == null ? void 0 : result.status)) {
-      case 1:
-        break;
-      default:
-        if (result) {
-          throw new import_types.WaterkotteError(Number(result.status), result.message);
-        } else {
-          throw new import_types.AdapterError(`Unhandled response from heat pump: ${response.data}`);
+    const cookie = await this.requestAsync(loginUrl, (response) => {
+      var _a, _b, _c;
+      try {
+        this.validateLogInOutResult(response.data);
+      } catch (e) {
+        if (!(e instanceof import_types.WaterkotteError && e.message === import_types.WaterkotteError.RELOGIN_ATTEMPT_MSG)) {
+          throw e;
         }
-    }
-    const cookie = (_e = (_d = (_c = response.headers["set-cookie"]) == null ? void 0 : _c.find((cookie2) => cookie2.includes(this.cookieName))) == null ? void 0 : _d.match(new RegExp(`^${this.cookieName}=(.+?);`))) == null ? void 0 : _e[1];
-    if (!cookie) {
-      throw new import_types.AdapterError(
-        `Unable to login: Could not find login token '${this.cookieName}' - Response: '${response.data}'`
-      );
-    }
+      }
+      const cookie2 = (_c = (_b = (_a = response.headers["set-cookie"]) == null ? void 0 : _a.find((cookie3) => cookie3.includes(this.cookieName))) == null ? void 0 : _b.match(new RegExp(`^${this.cookieName}=(.+?);`))) == null ? void 0 : _c[1];
+      if (!cookie2) {
+        throw new import_types.AdapterError(
+          `Unable to login: Could not find login token '${this.cookieName}' - Response: '${response.data}'`
+        );
+      }
+      return cookie2;
+    });
     return { token: cookie };
   }
   async logoutAsync() {
-    var _a, _b;
     const logoutUrl = `${this.cgiUrl}logout`;
-    const response = await this.requestAsync(logoutUrl);
-    const result = (_b = (_a = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()) == null ? void 0 : _a.value) == null ? void 0 : _b.groups;
-    switch (Number(result == null ? void 0 : result.status)) {
-      case 1:
-        break;
-      default:
-        if (result) {
-          throw new import_types.WaterkotteError(Number(result.status), result.message);
-        } else {
-          throw new import_types.AdapterError(`Unhandled response from heat pump: ${response.data}`);
-        }
+    await this.requestAsync(logoutUrl, (x) => this.validateLogInOutResult(x.data));
+  }
+  validateLogInOutResult(response) {
+    const extracted = this.extractWaterkotteInformation(response);
+    if (extracted instanceof import_types.WaterkotteError) {
+      throw extracted;
+    } else if (extracted && (extracted.code === 1 || extracted.message == import_types.WaterkotteError.RELOGIN_ATTEMPT_MSG)) {
+      return extracted;
+    } else {
+      throw new import_types.AdapterError(`Unhandled response from heat pump: ${response}`);
     }
+  }
+  extractWaterkotteInformation(response) {
+    var _a, _b, _c;
+    const match = (_b = (_a = String(response).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()) == null ? void 0 : _a.value) == null ? void 0 : _b.groups;
+    if (!match) {
+      return void 0;
+    }
+    const code = match.status != void 0 ? Number(match.status) : match.status;
+    if ((_c = match.message) == null ? void 0 : _c.startsWith(import_types.WaterkotteError.ERROR_INDICATOR)) {
+      return new import_types.WaterkotteError(match.message, code);
+    }
+    return { code, message: match.message };
   }
   async getTagsAsync(tags, login) {
     const tagResponses = [];
@@ -90,8 +98,18 @@ class WaterkotteCgi {
         {}
       );
       const tagUrl = `${this.cgiUrl}readTags?n=${chunk.length + chunk.map((x, i2) => `&t${i2 + 1}=${x.Id}`).join("")}`;
-      const response = await this.requestAsync(tagUrl, login);
-      for (const match of String(response.data).matchAll(WaterkotteCgi.TAG_RESPONSE_REG_EXP)) {
+      const response = await this.requestAsync(
+        tagUrl,
+        (response2) => {
+          const waterkotteResponse = this.extractWaterkotteInformation(response2.data);
+          if (waterkotteResponse instanceof import_types.WaterkotteError) {
+            throw waterkotteResponse;
+          }
+          return String(response2.data).matchAll(WaterkotteCgi.TAG_RESPONSE_REG_EXP);
+        },
+        login
+      );
+      for (const match of response) {
         const parameter = match.groups;
         if (!parameter) {
           continue;
@@ -117,13 +135,16 @@ class WaterkotteCgi {
     }
     return tagResponses;
   }
-  async requestAsync(url, login) {
+  async requestAsync(url, processResponse, login) {
     try {
       const response = await import_axios.default.get(url, {
         headers: { Cookie: login ? `${this.cookieName}=${login.token}` : "" }
       });
-      return response;
+      return processResponse(response);
     } catch (e) {
+      if (e instanceof import_types.WaterkotteError || e instanceof import_types.AdapterError) {
+        throw e;
+      }
       const baseMessage = `Request ${url.includes("password") ? "" : `to '${url}' `}failed: `;
       if (e instanceof Error) {
         throw new import_types.RethrowError(e, `${baseMessage}${e.message}`);
@@ -137,4 +158,4 @@ class WaterkotteCgi {
 0 && (module.exports = {
   WaterkotteCgi
 });
-//# sourceMappingURL=waterkotte.js.map
+//# sourceMappingURL=waterkottecgi.js.map

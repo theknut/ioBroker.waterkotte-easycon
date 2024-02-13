@@ -1,42 +1,50 @@
 import { expect } from '@jest/globals';
-import { getStates } from './../src/states';
+import { getServicesStates, getStates } from './../src/states';
+
+const allServicesArray = ['D23', 'D74', 'D117', 'D160', 'D196', 'D635'];
 
 describe('getStates', () => {
-    it('Should return no states if empty array is provided', () => {
-        expect(getStates([])).toHaveLength(0);
+    it('Should return basic states if empty array is provided', () => {
+        const states = getStates([]);
+        expect(states).not.toHaveLength(0);
+        expect(states.some((x) => x.Id == 'I5')).toBeTruthy();
     });
 
-    it('Should return no states if unknown identifier is used', () => {
-        expect(getStates(['unknown'])).toHaveLength(0);
+    it('Should return not throw error if unknown identifier is used', () => {
+        const states = getStates(['unknown']);
+        expect(states).not.toHaveLength(0);
+        expect(states.some((x) => x.Id == 'I5')).toBeTruthy();
     });
 
-    it('Should only return states of the provided identifiers', () => {
-        const heizenStates = getStates(['Heizen'], 'es');
+    it('Should only return states of the provided servies', () => {
+        const heizenStates = getStates(['D23'], 'es'); // 'es' will fall back to English
         expect(heizenStates).not.toHaveLength(0);
-
-        for (const state of heizenStates) {
-            expect(state.Path.startsWith('Heating')).toBeTruthy();
-        }
+        expect(heizenStates.some((x) => x.Id == 'I5')).toBeTruthy(); // includes basic states
+        expect(heizenStates.some((x) => x.Path.startsWith('Heat'))).toBeTruthy();
+        expect(heizenStates.some((x) => x.Path.startsWith('Cool'))).toBeFalsy();
     });
 
     it('Should return all requested identifiers', () => {
-        const states = getStates(['Heizen', 'Kühlen', 'Wasser', 'Energiebilanz', 'Messwerte', 'Status'], 'de');
+        const states = getStates(allServicesArray, 'de');
         expect(states).not.toHaveLength(0);
 
         expect(states.some((x) => x.Path.includes('Heizen'))).toBeTruthy();
         expect(states.some((x) => x.Path.includes('Kühlen'))).toBeTruthy();
-        expect(states.some((x) => x.Path.includes('Wasser'))).toBeTruthy();
-        expect(states.some((x) => x.Path.includes('Energiebilanz'))).toBeTruthy();
-        expect(states.some((x) => x.Path.includes('Messwerte'))).toBeTruthy();
-        expect(states.some((x) => x.Path.includes('Status'))).toBeTruthy();
+        expect(states.some((x) => x.Path.includes('Warmwasser'))).toBeTruthy();
+        expect(states.some((x) => x.Path.includes('Pool'))).toBeTruthy();
+        expect(states.some((x) => x.Path.includes('Solar'))).toBeTruthy();
+        expect(states.some((x) => x.Path.includes('Photovoltaik'))).toBeTruthy();
+        expect(states.some((x) => x.Path.includes('Energiebilanz'))).toBeTruthy(); // basic state
+        expect(states.some((x) => x.Path.includes('Messwerte'))).toBeTruthy(); // basic state
+        expect(states.some((x) => x.Path.includes('Status'))).toBeTruthy(); // basic state
     });
 
     it('All states should have valid names', () => {
-        const states = getStates(['Heizen', 'Kühlen', 'Wasser', 'Energiebilanz', 'Messwerte', 'Status']);
+        const states = getStates(allServicesArray);
         expect(states).not.toHaveLength(0);
 
         for (const state of states) {
-            const text: string | StringOrTranslated = state.Text;
+            const text: string | ioBroker.StringOrTranslated = state.Text;
 
             if (typeof text == 'string') {
                 if (text === '') {
@@ -50,8 +58,9 @@ describe('getStates', () => {
             }
         }
     });
-});
 
-type Languages = 'en' | 'de' | 'fr';
-type Translated = { en: string } & { [lang in Languages]?: string };
-type StringOrTranslated = string | Translated;
+    it('Should return services indicator states', () => {
+        const states = getServicesStates();
+        expect(states).not.toHaveLength(0);
+    });
+});

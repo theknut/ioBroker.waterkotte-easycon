@@ -9,6 +9,7 @@ import {
     ReadOnlyState,
     RethrowError,
     State,
+    WaterkotteError,
 } from '../src/types';
 
 describe('Types test', () => {
@@ -234,5 +235,9 @@ describe('RethrowError', () => {
                 expect(rethrowError.message).toBe(message);
             }
         }
+    });
+
+    it('Should set code depending on message if code is undefined', () => {
+        expect(new WaterkotteError('#E_NEED_LOGIN').code).toBe(WaterkotteError.LOGIN_REQUIRED);
     });
 });

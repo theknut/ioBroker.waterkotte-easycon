@@ -1,48 +1,104 @@
 import { getServicesStates, getStates } from './states';
-import { CommonState, ILogProvider, IndicatorState, Login, TagResponse } from './types';
+import { AdapterError, CommonState, ILogProvider, IndicatorState, Login, TagResponse, WaterkotteError } from './types';
 import { WaterkotteCgi } from './waterkottecgi';
 
 export class WaterkotteHeatPump {
     api: WaterkotteCgi;
-    login: Login = <Login>{};
+    login?: Login;
     tags: CommonState[] = [];
 
     constructor(
         ipAddress: string,
+        private username: string,
+        private password: string,
         private log: ILogProvider,
     ) {
         this.api = new WaterkotteCgi(ipAddress, log);
     }
 
-    async connect(username: string = 'waterkotte', password: string = 'waterkotte'): Promise<boolean> {
-        this.login = await this.api.loginAsync(username, password);
-        return true;
+    async connectAsync(): Promise<boolean | Error> {
+        try {
+            this.login = await this.api.loginAsync(this.username, this.password);
+            return true;
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                return e;
+            }
+            return false;
+        }
     }
 
-    async disconect(): Promise<void> {
-        await this.api.logoutAsync();
+    async disconnectAsync(): Promise<boolean | Error> {
+        try {
+            await this.api.logoutAsync();
+            return true;
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                return e;
+            }
+            return false;
+        }
     }
 
     async requestTagsAsync(): Promise<TagResponse[]> {
-        if (this.tags.length == 0) {
-            this.tags = await this.getTagsToRequest();
-        }
+        try {
+            if (!this.login) {
+                const loginResult = await this.connectAsync();
+                if (typeof loginResult == 'boolean') {
+                    if (loginResult) {
+                        this.log.debug('Successfully (re-)logged in');
+                        return await this.requestTagsAsync();
+                    } else {
+                        this.log.error('Unhandled result when logging in');
+                        return [];
+                    }
+                } else {
+                    throw loginResult;
+                }
+            }
 
-        const tagResponses = await this.api.getTagsAsync(this.tags, this.login);
-        return tagResponses;
+            if (this.tags.length == 0) {
+                this.tags = await this.getTagsToRequest();
+            }
+
+            const tagResponses = await this.api.getTagsAsync(this.tags, this.login);
+            return tagResponses;
+        } catch (e: unknown) {
+            if (e instanceof WaterkotteError) {
+                switch (e.code) {
+                    case WaterkotteError.LOGIN_REQUIRED:
+                        this.login = undefined;
+                        return await this.requestTagsAsync();
+                    case WaterkotteError.TOO_MANY_USERS:
+                        this.login = undefined;
+                        this.log.warn(`Too many users, skip this request`);
+                        return [];
+                }
+            }
+
+            throw e;
+        }
     }
 
     private async getTagsToRequest(): Promise<CommonState[]> {
+        if (!this.login) {
+            throw new AdapterError('getTagsToRequest: Not logged in');
+        }
+
         const response = await this.api.getTagsAsync(getServicesStates(), this.login);
-        const enabledServices = response
+        const activeServices = response
             .filter(
                 (x) =>
                     x instanceof TagResponse &&
                     x.state instanceof IndicatorState &&
                     x.state.normalizeValue(x.response.value) === true,
             )
-            .map((x) => x.state.Id);
-        const states = getStates(enabledServices);
+            .map((x) => {
+                this.log.debug(`Active service: ${JSON.stringify(x.state.Text)}`);
+                return x.state.Id;
+            });
+        const states = getStates(activeServices);
+
         return states;
     }
 }

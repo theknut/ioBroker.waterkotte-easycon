@@ -13,7 +13,7 @@ import {
 export class WaterkotteCgi {
     private static readonly TAG_RESPONSE_REG_EXP =
         /\#(?<name>[\w\d]+)\s+(?<status>.*)\n(?:(?<unknown>\d+)\s+(?<value>.?\d+))?/gm;
-    private static readonly LOGIN_REQUEST_REG_EXP = /(?<status>-?\d+)[\n\r]+(?<message>.*)/gm;
+    private static readonly LOGIN_REQUEST_REG_EXP = /(?:(?<status>\-?\d+)[\n\r]+)?(?<message>\#.*)/gm;
     private readonly cookieName = 'IDALToken';
     private baseUrl: string;
     private cgiUrl: string;
@@ -29,55 +29,62 @@ export class WaterkotteCgi {
 
     async loginAsync(username: string = 'waterkotte', password: string = 'waterkotte'): Promise<Login> {
         const loginUrl = `${this.cgiUrl}login?username=${username}&password=${password}`;
-        const response = await this.requestAsync(loginUrl);
-
-        const result = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()?.value?.groups;
-
-        switch (Number(result?.status)) {
-            case 1:
-                break;
-            default:
-                if (result) {
-                    throw new WaterkotteError(Number(result.status), result.message);
-                } else {
-                    throw new AdapterError(`Unhandled response from heat pump: ${response.data}`);
+        const cookie = await this.requestAsync(loginUrl, (response) => {
+            try {
+                this.validateLogInOutResult(response.data);
+            } catch (e: unknown) {
+                if (!(e instanceof WaterkotteError && e.message === WaterkotteError.RELOGIN_ATTEMPT_MSG)) {
+                    throw e;
                 }
-        }
+            }
+            const cookie = (response.headers['set-cookie'] as string[])
+                ?.find((cookie) => cookie.includes(this.cookieName))
+                ?.match(new RegExp(`^${this.cookieName}=(.+?);`))?.[1];
 
-        const cookie = (response.headers['set-cookie'] as string[])
-            ?.find((cookie) => cookie.includes(this.cookieName))
-            ?.match(new RegExp(`^${this.cookieName}=(.+?);`))?.[1];
+            if (!cookie) {
+                throw new AdapterError(
+                    `Unable to login: Could not find login token '${this.cookieName}' - Response: '${response.data}'`,
+                );
+            }
 
-        if (!cookie) {
-            throw new AdapterError(
-                `Unable to login: Could not find login token '${this.cookieName}' - Response: '${response.data}'`,
-            );
-        }
+            return cookie;
+        });
 
         return <Login>{ token: cookie };
     }
 
     async logoutAsync(): Promise<void> {
         const logoutUrl = `${this.cgiUrl}logout`;
-        const response = await this.requestAsync(logoutUrl);
+        await this.requestAsync(logoutUrl, (x) => this.validateLogInOutResult(x.data));
+    }
 
-        const result = String(response.data).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()?.value?.groups;
-
-        switch (Number(result?.status)) {
-            case 1:
-                break;
-            default:
-                if (result) {
-                    throw new WaterkotteError(Number(result.status), result.message);
-                } else {
-                    throw new AdapterError(`Unhandled response from heat pump: ${response.data}`);
-                }
+    validateLogInOutResult(response: string): any {
+        const extracted = this.extractWaterkotteInformation(response);
+        if (extracted instanceof WaterkotteError) {
+            throw extracted;
+        } else if (extracted && (extracted.code === 1 || extracted.message == WaterkotteError.RELOGIN_ATTEMPT_MSG)) {
+            return extracted;
+        } else {
+            throw new AdapterError(`Unhandled response from heat pump: ${response}`);
         }
+    }
+
+    extractWaterkotteInformation(response: string): { code: number; message: string } | undefined | WaterkotteError {
+        const match = String(response).matchAll(WaterkotteCgi.LOGIN_REQUEST_REG_EXP).next()?.value?.groups;
+        if (!match) {
+            return undefined;
+        }
+
+        const code = match.status != undefined ? Number(match.status) : match.status;
+        if (match.message?.startsWith(WaterkotteError.ERROR_INDICATOR)) {
+            return new WaterkotteError(match.message, code);
+        }
+
+        return { code: code, message: match.message };
     }
 
     async getTagsAsync(tags: CommonState[], login: Login): Promise<TagResponse[]> {
         const tagResponses: TagResponse[] = [];
-
         for (let i = 0; i < tags.length; i += this.maximumTagsPerRequest) {
             const chunk = tags.slice(i, i + this.maximumTagsPerRequest);
             const record = chunk.reduce(
@@ -86,9 +93,20 @@ export class WaterkotteCgi {
             );
 
             const tagUrl = `${this.cgiUrl}readTags?n=${chunk.length + chunk.map((x, i) => `&t${i + 1}=${x.Id}`).join('')}`;
-            const response = await this.requestAsync(tagUrl, login);
+            const response = await this.requestAsync(
+                tagUrl,
+                (response) => {
+                    const waterkotteResponse = this.extractWaterkotteInformation(response.data);
+                    if (waterkotteResponse instanceof WaterkotteError) {
+                        throw waterkotteResponse;
+                    }
 
-            for (const match of String(response.data).matchAll(WaterkotteCgi.TAG_RESPONSE_REG_EXP)) {
+                    return String(response.data).matchAll(WaterkotteCgi.TAG_RESPONSE_REG_EXP);
+                },
+                login,
+            );
+
+            for (const match of response) {
                 const parameter = match.groups;
                 if (!parameter) {
                     continue;
@@ -120,14 +138,23 @@ export class WaterkotteCgi {
         return tagResponses;
     }
 
-    public async requestAsync(url: string, login?: Login): Promise<axios.AxiosResponse<any, any>> {
+    public async requestAsync<TResult>(
+        url: string,
+        processResponse: (response: axios.AxiosResponse<any, any>) => TResult,
+        login?: Login,
+    ): Promise<TResult> {
         try {
             const response = await axios.get(url, {
                 headers: { Cookie: login ? `${this.cookieName}=${login.token}` : '' },
             });
 
-            return response;
+            return processResponse(response);
         } catch (e: unknown) {
+            // rethrow own errors
+            if (e instanceof WaterkotteError || e instanceof AdapterError) {
+                throw e;
+            }
+
             const baseMessage = `Request ${url.includes('password') ? '' : `to '${url}' `}failed: `;
             if (e instanceof Error) {
                 throw new RethrowError(e, `${baseMessage}${e.message}`);

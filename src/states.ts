@@ -43,8 +43,8 @@ function getState(path: string, id: string, unit: string): State {
     return new State(path, id, dict.getTranslation(id), unit);
 }
 
-function getReadOnlyState(path: string, id: string, unit?: string): State {
-    return new ReadOnlyState(path, id, dict.getTranslation(id), unit);
+function getReadOnlyState(path: string, id: string, unit?: string, text?: ioBroker.StringOrTranslated): State {
+    return new ReadOnlyState(path, id, text ?? dict.getTranslation(id), unit);
 }
 
 function getEnumState(
@@ -118,15 +118,14 @@ export function getStates(pollStatesOf: string[], language: ioBroker.Languages =
         states.push(getReadOnlyState(waterSettings, 'A37', '°C'));
         states.push(getState(waterSettings, 'A139', 'K'));
 
-        //TODO
         const waterThermalDis = dict.getTranslations(['Hh2o', 'ThermalDis'], language);
         states.push(getState(waterThermalDis, 'A168', '°C'));
-        states.push(getReadOnlyState(waterThermalDis, 'I505'));
+        states.push(getReadOnlyState(waterThermalDis, 'I505', 'Uhr'));
         states.push(getState(waterThermalDis, 'I507', 'h'));
         states.push(getEnumState(waterThermalDis, 'I508', dict.noneDayAll));
 
         const waterSolarSupp = dict.getTranslations(['Hh2o', 'SolarSupp'], language);
-        states.push(getState(waterSolarSupp, 'I508', '°C'));
+        states.push(getState(waterSolarSupp, 'A169', '°C'));
         states.push(getState(waterSolarSupp, 'I517', ''));
         states.push(getReadOnlyState(waterSolarSupp, 'I518'));
 
@@ -135,7 +134,69 @@ export function getStates(pollStatesOf: string[], language: ioBroker.Languages =
         states.push(getIndicator(waterStatus, 'D118'));
     }
 
-    const energySettings = dict.getTranslations(['CPD', 'CPDPower'], language);
+    if (pollStatesOf.includes(poolIndicatorState.Id)) {
+        const poolSettings = dict.getTranslations(['Pool', 'Settings'], language);
+        states.push(getState(poolSettings, 'A41', '°C'));
+        states.push(
+            getEnumState(
+                poolSettings,
+                'I1740',
+                { 0: '-2.0', 1: '-1.5', 2: '-1.0', 3: '-0.5', 4: '0.0', 5: '0.5', 6: '1.0', 7: '1.5', 8: '2.0' },
+                '°C',
+            ),
+        );
+        states.push(getEnumState(poolSettings, 'I33', dict.offAutoManuell));
+        states.push(getReadOnlyState(poolSettings, 'A20', '°C'));
+        states.push(getReadOnlyState(poolSettings, 'A40', '°C'));
+        states.push(getState(poolSettings, 'A174', 'K'));
+
+        const poolCurve = dict.getTranslations(['Pool', 'Curve'], language);
+        states.push(getReadOnlyState(poolCurve, 'A746', '°C'));
+        states.push(getState(poolCurve, 'A749', '°C'));
+        states.push(getState(poolCurve, 'A749', '°C'));
+        states.push(getState(poolCurve, 'A750', '°C'));
+        states.push(getState(poolCurve, 'A747', '°C'));
+        states.push(getState(poolCurve, 'A748', '°C'));
+        states.push(getState(poolCurve, 'A752', '°C'));
+    }
+
+    if (pollStatesOf.includes(solarIndicatorState.Id)) {
+        const solarSettings = dict.getTranslations(['Solar', 'Settings'], language);
+        states.push(getState(solarSettings, 'A205', 'K'));
+        states.push(getState(solarSettings, 'A206', 'K'));
+        states.push(getState(solarSettings, 'A207', 'K'));
+        states.push(getEnumState(solarSettings, 'I34', dict.offAutoManuell));
+        states.push(getReadOnlyState(solarSettings, 'A21', '°C'));
+        states.push(getReadOnlyState(solarSettings, 'A1101', '°C'));
+        states.push(getReadOnlyState(solarSettings, 'A22', '°C'));
+        states.push(getReadOnlyState(solarSettings, 'A209', '°C'));
+
+        const solarRegen = dict.getTranslations(['Solar', 'SolarRegen'], language);
+        states.push(getEnumState(solarSettings, 'I42', dict.offAutoManuell));
+        states.push(getReadOnlyState(solarRegen, 'A686', '°C'));
+        states.push(getState(solarRegen, 'A687', '°C'));
+        states.push(getState(solarRegen, 'A688', 'K'));
+        states.push(getEnumState(solarRegen, 'I2253', dict.openClosed));
+    }
+
+    if (pollStatesOf.includes(pvIndicatorState.Id)) {
+        const pvSettings = dict.getTranslations(['PV', 'Settings'], language);
+        states.push(getEnumState(pvSettings, 'I41', dict.offAutoManuell));
+        states.push(getReadOnlyState(pvSettings, 'A1223', 'kW'));
+        states.push(getReadOnlyState(pvSettings, 'A1194', 'kW'));
+        states.push(getReadOnlyState(pvSettings, 'A1224', 'kW'));
+
+        const pvChange = dict.getTranslations(['PV', 'PVChange'], language);
+        states.push(getState(pvChange, 'A682', 'K'));
+        states.push(getState(pvChange, 'A683', 'K'));
+        states.push(getState(pvChange, 'A684', 'K'));
+        states.push(getState(pvChange, 'A685', 'K'));
+        //states.push(getState(pvChange, 'A1094', 'K'));
+        //states.push(getState(pvChange, 'AI1095', 'K'));
+        //states.push(getState(pvChange, 'AI1096', 'K'));
+    }
+
+    const energySettings = dict.getTranslations(['CPD', 'Status'], language);
     states.push(getReadOnlyState(energySettings, 'A25', 'kW'));
     states.push(getReadOnlyState(energySettings, 'A26', 'kW'));
     states.push(getReadOnlyState(energySettings, 'A28'));
@@ -186,6 +247,11 @@ export function getStates(pollStatesOf: string[], language: ioBroker.Languages =
     states.push(getIndicator(status, 'D581'));
     states.push(getIndicator(status, 'D701'));
     states.push(getIndicator(status, 'D71'));
+    states.push(getReadOnlyState(status, 'I5', 'dd', dict.getTranslation(['I5', 'I1260'], ' ')));
+    states.push(getReadOnlyState(status, 'I6', 'mmm', dict.getTranslation(['I5', 'Day'], ' ')));
+    states.push(getReadOnlyState(status, 'I7', 'yy', dict.getTranslation(['I5', 'I1261'], ' ')));
+    states.push(getReadOnlyState(status, 'I8', 'h'));
+    states.push(getReadOnlyState(status, 'I9', 'min', dict.getTranslation('I8')));
 
     const statusDI = `${status}.DigitalInputs`;
     states.push(getIndicator(statusDI, 'D1010'));
