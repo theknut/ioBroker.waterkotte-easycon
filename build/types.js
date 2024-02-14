@@ -23,6 +23,7 @@ __export(types_exports, {
   EnumState: () => EnumState,
   HexAnalogState: () => HexAnalogState,
   IndicatorState: () => IndicatorState,
+  PathFlavor: () => PathFlavor,
   ReadOnlyEnumState: () => ReadOnlyEnumState,
   ReadOnlyState: () => ReadOnlyState,
   RethrowError: () => RethrowError,
@@ -32,6 +33,11 @@ __export(types_exports, {
   WaterkotteError: () => WaterkotteError
 });
 module.exports = __toCommonJS(types_exports);
+var PathFlavor = /* @__PURE__ */ ((PathFlavor2) => {
+  PathFlavor2[PathFlavor2["Id"] = 0] = "Id";
+  PathFlavor2[PathFlavor2["Description"] = 1] = "Description";
+  return PathFlavor2;
+})(PathFlavor || {});
 class CommonState {
   constructor(Path, Id, Text, Unit, Readonly = true, ValueMap = [], Type = "number") {
     this.Path = Path;
@@ -59,8 +65,28 @@ class CommonState {
     }
     return { Qualifier: groups.qualifier, Number: Number(groups.number) };
   }
-  getStateId() {
-    return `${this.Path}.${this.Id}`;
+  getPath(flavor = 0 /* Id */, replaceRegExp, language = "en") {
+    var _a;
+    let segments = [this.Path];
+    switch (flavor) {
+      case 0 /* Id */:
+        segments.push(this.Id);
+        break;
+      case 1 /* Description */:
+        if (typeof this.Text === "string") {
+          segments.push(this.Text);
+        } else {
+          segments.push((_a = this.Text[language]) != null ? _a : this.Text["en"]);
+        }
+        break;
+      default:
+        throw new AdapterError(`Unknown path flavor '${flavor}'`);
+    }
+    if (replaceRegExp) {
+      segments = segments.map((segment) => segment.replace(replaceRegExp, "_"));
+    }
+    const path = segments.join(".");
+    return path;
   }
   getRole() {
     if (this.Unit === "\xB0C") {
@@ -230,6 +256,7 @@ class RethrowError extends AdapterError {
   EnumState,
   HexAnalogState,
   IndicatorState,
+  PathFlavor,
   ReadOnlyEnumState,
   ReadOnlyState,
   RethrowError,

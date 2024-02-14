@@ -33,7 +33,7 @@ class WaterkotteEasycon extends utils.Adapter {
   }
   async onReady() {
     this.setStateAsync("info.connection", false, true);
-    if (!await this.checkConfig()) {
+    if (!await this.updateAndHandleConfigAsync()) {
       return;
     }
     this.api = new import_waterkotteheatpump.WaterkotteHeatPump(this.config.ipAddress, this.config.username, this.config.password, this.log);
@@ -85,7 +85,38 @@ class WaterkotteEasycon extends utils.Adapter {
     await this.setMessageStateAsync(message);
     return false;
   }
+  async updateAndHandleConfigAsync() {
+    if (!await this.checkConfig()) {
+      return false;
+    }
+    const info = await this.getObjectAsync("info");
+    const lastConfig = info == null ? void 0 : info.native;
+    if (lastConfig) {
+      if (lastConfig.pathFlavor != this.config.pathFlavor || lastConfig.removeWhitespace != this.config.removeWhitespace) {
+        await this.deleteAllObjectsAsync();
+      }
+    }
+    await this.extendObjectAsync("info", { native: this.config });
+    return true;
+  }
+  async deleteAllObjectsAsync() {
+    const objects = await this.getObjectListAsync({
+      startkey: this.namespace
+    });
+    if (objects.rows) {
+      const infoObjectId = `${this.namespace}.info`;
+      for (const obj of objects.rows.filter(
+        (x) => x.id.startsWith(this.namespace) && !x.id.replace(this.namespace + ".", "").includes(".")
+      )) {
+        if (obj.id.startsWith(infoObjectId)) {
+          this.log.info("delete " + obj.id);
+        }
+      }
+      return;
+    }
+  }
   async updateParametersAsync() {
+    var _a;
     if (!this.api) {
       throw new import_types.AdapterError("Unable to update parameters because api has not been initialized");
     }
@@ -101,7 +132,11 @@ class WaterkotteEasycon extends utils.Adapter {
         if (!tagResponse.state) {
           continue;
         }
-        const id = tagResponse.state.getStateId();
+        let id = tagResponse.state.getPath(this.config.pathFlavor, this.FORBIDDEN_CHARS, (_a = this.language) != null ? _a : "en");
+        if (this.config.removeWhitespace) {
+          id = id.replaceAll(/\s/g, "_");
+        }
+        id = id.trimEnd(".");
         await this.createObjectIfNotExists(
           id,
           {

@@ -71,7 +71,7 @@ class WaterkotteCgi {
     const extracted = this.extractWaterkotteInformation(response);
     if (extracted instanceof import_types.WaterkotteError) {
       throw extracted;
-    } else if (extracted && (extracted.code === 1 || extracted.message == import_types.WaterkotteError.RELOGIN_ATTEMPT_MSG)) {
+    } else if (extracted && extracted.code === 1) {
       return extracted;
     } else {
       throw new import_types.AdapterError(`Unhandled response from heat pump: ${response}`);

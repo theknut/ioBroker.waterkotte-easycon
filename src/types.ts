@@ -2,6 +2,11 @@ interface Path {
     Id: string;
 }
 
+export enum PathFlavor {
+    Id,
+    Description,
+}
+
 export class CommonState implements Path {
     private static readonly ID_PARTS_REGEXP = /(?<qualifier>[a-z])(?<number>\d+)/gim;
     readonly type: string = 'CommonState';
@@ -33,8 +38,30 @@ export class CommonState implements Path {
         return { Qualifier: groups.qualifier, Number: Number(groups.number) };
     }
 
-    getStateId(): string {
-        return `${this.Path}.${this.Id}`;
+    getPath(flavor: PathFlavor = PathFlavor.Id, replaceRegExp?: RegExp, language: ioBroker.Languages = 'en'): string {
+        let segments: string[] = [this.Path];
+
+        switch (flavor) {
+            case PathFlavor.Id:
+                segments.push(this.Id);
+                break;
+            case PathFlavor.Description:
+                if (typeof this.Text === 'string') {
+                    segments.push(this.Text);
+                } else {
+                    segments.push(this.Text[language] ?? this.Text['en']);
+                }
+                break;
+            default:
+                throw new AdapterError(`Unknown path flavor '${flavor}'`);
+        }
+
+        if (replaceRegExp) {
+            segments = segments.map((segment) => segment.replace(replaceRegExp, '_'));
+        }
+
+        const path = segments.join('.');
+        return path;
     }
 
     getRole(): string {

@@ -26,7 +26,7 @@ class WaterkotteEasycon extends utils.Adapter {
     private async onReady(): Promise<void> {
         this.setStateAsync('info.connection', false, true);
 
-        if (!(await this.checkConfig())) {
+        if (!(await this.updateAndHandleConfigAsync())) {
             return;
         }
 
@@ -89,6 +89,45 @@ class WaterkotteEasycon extends utils.Adapter {
         return false;
     }
 
+    private async updateAndHandleConfigAsync(): Promise<boolean> {
+        if (!(await this.checkConfig())) {
+            return false;
+        }
+
+        const info = await this.getObjectAsync('info');
+        const lastConfig: ioBroker.AdapterConfig = <ioBroker.AdapterConfig>info?.native;
+
+        if (lastConfig) {
+            if (
+                lastConfig.pathFlavor != this.config.pathFlavor ||
+                lastConfig.removeWhitespace != this.config.removeWhitespace
+            ) {
+                await this.deleteAllObjectsAsync();
+            }
+        }
+
+        await this.extendObjectAsync('info', { native: this.config });
+        return true;
+    }
+
+    private async deleteAllObjectsAsync(): Promise<void> {
+        const objects = await this.getObjectListAsync({
+            startkey: this.namespace,
+        });
+
+        if (objects.rows) {
+            const infoObjectId = `${this.namespace}.info`;
+            for (const obj of objects.rows.filter(
+                (x) => x.id.startsWith(this.namespace) && !x.id.replace(this.namespace + '.', '').includes('.'),
+            )) {
+                if (obj.id.startsWith(infoObjectId)) {
+                    this.log.info('delete ' + obj.id);
+                }
+            }
+            return;
+        }
+    }
+
     private async updateParametersAsync(): Promise<void | Error> {
         if (!this.api) {
             throw new AdapterError('Unable to update parameters because api has not been initialized');
@@ -109,7 +148,12 @@ class WaterkotteEasycon extends utils.Adapter {
                     continue;
                 }
 
-                const id = tagResponse.state.getStateId();
+                let id = tagResponse.state.getPath(this.config.pathFlavor, this.FORBIDDEN_CHARS, this.language ?? 'en');
+                if (this.config.removeWhitespace) {
+                    id = id.replaceAll(/\s/g, '_');
+                }
+
+                //id = id.trim('.');
 
                 await this.createObjectIfNotExists(
                     id,

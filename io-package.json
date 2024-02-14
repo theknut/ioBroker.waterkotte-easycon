@@ -76,7 +76,11 @@
     },
     "native": {
         "username": "",
-        "password": ""
+        "password": "",
+        "ipAddress": "",
+        "pollingInterval": 300000,
+        "pathFlavor": 1,
+        "removeWhitespace": true
     },
     "protectedNative": ["username", "password"],
     "encryptedNative": ["password"],

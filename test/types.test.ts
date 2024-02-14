@@ -1,16 +1,20 @@
 import { expect } from '@jest/globals';
+import { WaterkotteDictionary } from '../src/dictionary';
 import {
     AdapterError,
     CommonState,
     EnumState,
     HexAnalogState,
     IndicatorState,
+    PathFlavor,
     ReadOnlyEnumState,
     ReadOnlyState,
     RethrowError,
     State,
     WaterkotteError,
 } from '../src/types';
+
+const dict = new WaterkotteDictionary();
 
 describe('Types test', () => {
     const readOnlyState = new ReadOnlyState('1', 'A1', 'Außentemperatur', '°C');
@@ -25,6 +29,7 @@ describe('Types test', () => {
     const celsiusState = new State('4', 'A3', 'Außentemperatur Ø24h', '°C');
     const kelvinState = new State('5', 'A61', 'Schaltdifferenz Sollwert', 'K');
     const kWhState = new HexAnalogState('6', 'A458', 'A459', 'Elektrische Arbeit Gesamt');
+    const translatedState = new HexAnalogState('6', 'A458', 'A459', dict.getTranslation('A461'));
     const noUnitState = new State('7', 'A460', 'Arbeitszahl Wärmepumpe');
     const barState = new State('8', 'A8', 'p Verdampfer', 'bar');
     const evuState = new IndicatorState('9', 'D581', 'Externe Abschaltung');
@@ -96,8 +101,70 @@ describe('Types test', () => {
         }
     });
 
-    it('Should get state id based on path and id', async () => {
-        expect(celsiusState.getStateId()).toBe('4.A3');
+    it.each([
+        { state: kWhState, flavor: undefined, replaceRegExp: undefined, language: 'de', expected: '6.A458' },
+        { state: kWhState, flavor: PathFlavor.Id, replaceRegExp: undefined, language: 'de', expected: '6.A458' },
+        { state: kWhState, flavor: PathFlavor.Id, replaceRegExp: /A/g, language: 'fr', expected: '6._458' },
+        { state: kWhState, flavor: PathFlavor.Id, replaceRegExp: /A/g, language: undefined, expected: '6._458' },
+        { state: kWhState, flavor: PathFlavor.Id, replaceRegExp: /A/g, language: 'es', expected: '6._458' },
+        {
+            state: kWhState,
+            flavor: PathFlavor.Description,
+            replaceRegExp: undefined,
+            language: 'de',
+            expected: '6.Elektrische Arbeit Gesamt',
+        },
+        {
+            state: translatedState,
+            flavor: PathFlavor.Description,
+            replaceRegExp: undefined,
+            language: 'de',
+            expected: '6.Arbeitszahl Gesamtsystem',
+        },
+        {
+            state: translatedState,
+            flavor: PathFlavor.Description,
+            replaceRegExp: /\s/g,
+            language: 'en',
+            expected: '6.Performance_total_system',
+        },
+        {
+            state: translatedState,
+            flavor: PathFlavor.Description,
+            replaceRegExp: /\s/g,
+            language: undefined,
+            expected: '6.Performance_total_system',
+        },
+        {
+            state: translatedState,
+            flavor: PathFlavor.Description,
+            replaceRegExp: /\s/g,
+            language: 'es',
+            expected: '6.Performance_total_system',
+        },
+        {
+            state: translatedState,
+            flavor: PathFlavor.Description,
+            replaceRegExp: /\s/g,
+            language: 'fr',
+            expected: '6.COP_système_complet',
+        },
+    ])(
+        "Should get state id '$expected' for flavor '$flavor', replace regular expression '$replaceRegExp' and language '$language'",
+        async ({ state, flavor, replaceRegExp, language, expected }) => {
+            const lang: ioBroker.Languages = <ioBroker.Languages>language;
+            expect(state.getPath(flavor, replaceRegExp, lang)).toBe(expected);
+        },
+    );
+
+    it('Should throw on invalid path flavor', () => {
+        try {
+            //@ts-expect-error
+            kWhState.getPath(null);
+            throw new Error('Invalid flavor did not throw error');
+        } catch (e: unknown) {
+            expect(e).toBeInstanceOf(AdapterError);
+        }
     });
 
     it('Should throw if value is not boolean integer', () => {

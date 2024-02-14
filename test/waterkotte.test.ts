@@ -129,7 +129,7 @@ describe('Waterkotte API - login', () => {
     it('Should handle re-login attempt error without header', async () => {
         expect(useMocks).toBeTruthy();
 
-        const data = '#E_RE-LOGIN_ATTEMPT';
+        const data = WaterkotteError.RELOGIN_ATTEMPT_MSG;
         mock.onGet(/.*/).reply(200, data);
 
         try {
