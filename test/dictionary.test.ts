@@ -1,5 +1,6 @@
 import { expect } from '@jest/globals';
 import { WaterkotteDictionary } from '../src/dictionary';
+import { AdapterError } from '../src/types';
 
 describe('WaterkotteDictionary', () => {
     const dict = new WaterkotteDictionary();
@@ -36,16 +37,27 @@ describe('WaterkotteDictionary', () => {
         {
             identifiers: ['A1'],
             language: 'fr',
+            seperator: undefined,
             expected: 'Temp\xe9rature ext\xe9rieure',
         },
         {
             identifiers: ['Heat', 'Settings'],
             language: 'de',
+            seperator: undefined,
             expected: 'Heizen.Einstellungen',
         },
-    ])('Should return translation for $identifier and language $language', ({ identifiers, language, expected }) => {
-        expect(dict.getTranslations(identifiers, language as ioBroker.Languages)).toBe(expected);
-    });
+        {
+            identifiers: ['Heat', 'Settings'],
+            language: 'es',
+            seperator: '-',
+            expected: 'Heating-Settings',
+        },
+    ])(
+        'Should return translation for $identifier and language $language',
+        ({ identifiers, language, seperator, expected }) => {
+            expect(dict.getTranslations(identifiers, language as ioBroker.Languages, seperator)).toBe(expected);
+        },
+    );
 
     it('Should fall back to English if language is missing', () => {
         expect(dict.getTranslation('Disabled')).toStrictEqual({
@@ -65,5 +77,10 @@ describe('WaterkotteDictionary', () => {
 
     it('Should fall back to English if requested language is missing', () => {
         expect(dict.getTranslations('Disabled', 'es')).toBe('Disabled');
+    });
+
+    it('Should throw if no language is provided', () => {
+        let language: any;
+        expect(() => dict.getTranslations('Disabled', language)).toThrowError(AdapterError);
     });
 });

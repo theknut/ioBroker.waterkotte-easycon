@@ -1,5 +1,7 @@
 // This file extends the AdapterConfig type from "@types/iobroker"
 
+import { PathFlavor } from '../types';
+
 // Augment the globally declared type ioBroker.AdapterConfig
 declare global {
     namespace ioBroker {
@@ -7,8 +9,9 @@ declare global {
             ipAddress: string;
             username: string;
             password: string;
-            pollStatesOf: string[];
             pollingInterval: number;
+            pathFlavor: PathFlavor;
+            removeWhitespace: true;
         }
     }
 }

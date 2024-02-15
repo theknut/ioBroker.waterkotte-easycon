@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 import {
     AdapterError,
@@ -14,7 +14,7 @@ import {
     UnknownTagResponse,
     WaterkotteError,
 } from '../src/types';
-import { WaterkotteCgi } from './../src/waterkotte';
+import { WaterkotteCgi } from '../src/waterkottecgi';
 
 let useMocks = true;
 
@@ -68,19 +68,20 @@ describe('Waterkotte API - login', () => {
         }
     }, 30000);
 
-    it('Should handle re-login attempt', async () => {
+    it('Should handle not reachable', async () => {
         expect(useMocks).toBeTruthy();
 
-        const data = '#E_RE-LOGIN_ATTEMPT';
-        mock.onGet(/.*/).reply(200, data);
+        const data = 'Request failed with status code 404';
+        mock.onGet(/.*/).reply(404, data);
 
         try {
             await api.loginAsync();
-            throw new Error('Login with invalid credentials did not throw error');
+            throw new Error('Connecting to wrong IP address did not throw error');
         } catch (e: unknown) {
-            expect(e).toBeInstanceOf(AdapterError);
-            const adapterError = e as AdapterError;
-            expect(adapterError.message.includes(data)).toBeTruthy();
+            expect(e).toBeInstanceOf(RethrowError);
+            const rethrowError = e as RethrowError;
+            expect(rethrowError.innerError).toBeInstanceOf(AxiosError);
+            expect(rethrowError.message.includes(data)).toBeTruthy();
         }
     });
 
@@ -125,14 +126,14 @@ describe('Waterkotte API - login', () => {
         }
     });
 
-    it('Should handle logout error', async () => {
+    it('Should handle re-login attempt error without header', async () => {
         expect(useMocks).toBeTruthy();
 
-        const data = '#E_RE-LOGIN_ATTEMPT';
+        const data = WaterkotteError.RELOGIN_ATTEMPT_MSG;
         mock.onGet(/.*/).reply(200, data);
 
         try {
-            await api.logoutAsync();
+            await api.loginAsync();
             throw new Error('Logout did not throw error');
         } catch (e: unknown) {
             expect(e).toBeInstanceOf(AdapterError);
@@ -141,6 +142,24 @@ describe('Waterkotte API - login', () => {
             expect(adapterError.message.includes(data)).toBeTruthy();
         }
     });
+
+    it('Should handle re-login attempt error with header', async () => {
+        applyMock(() => {
+            const headers: any = {
+                'set-cookie': [`${anyApi.cookieName}=😘;`],
+            };
+            mock.onGet(/.*login\?.*/).reply(200, WaterkotteError.RELOGIN_ATTEMPT_MSG, headers);
+        });
+
+        const login = await api.loginAsync();
+        expect(login).not.toBeUndefined();
+
+        if (useMocks) {
+            expect(login.token).toBe(`😘`);
+        } else {
+            expect(login.token).not.toHaveLength(0);
+        }
+    }, 30000);
 
     it('Should throw if login response can not be parsed', async () => {
         expect(useMocks).toBeTruthy();
@@ -178,7 +197,7 @@ describe('Waterkotte API - login', () => {
         mock.onGet(/.*/).reply(404, data);
 
         try {
-            await api.requestAsync('http://');
+            await api.requestAsync('http://', (x) => x);
         } catch (e: unknown) {
             expect(e).toBeInstanceOf(RethrowError);
             const rethrowError = e as RethrowError;

@@ -23,6 +23,7 @@ __export(types_exports, {
   EnumState: () => EnumState,
   HexAnalogState: () => HexAnalogState,
   IndicatorState: () => IndicatorState,
+  PathFlavor: () => PathFlavor,
   ReadOnlyEnumState: () => ReadOnlyEnumState,
   ReadOnlyState: () => ReadOnlyState,
   RethrowError: () => RethrowError,
@@ -32,27 +33,31 @@ __export(types_exports, {
   WaterkotteError: () => WaterkotteError
 });
 module.exports = __toCommonJS(types_exports);
+var PathFlavor = /* @__PURE__ */ ((PathFlavor2) => {
+  PathFlavor2[PathFlavor2["Id"] = 0] = "Id";
+  PathFlavor2[PathFlavor2["Description"] = 1] = "Description";
+  return PathFlavor2;
+})(PathFlavor || {});
 class CommonState {
+  constructor(Path, Id, Text, Unit, Readonly = true, ValueMap = [], Type = "number") {
+    this.Path = Path;
+    this.Id = Id;
+    this.Text = Text;
+    this.Unit = Unit;
+    this.Readonly = Readonly;
+    this.ValueMap = ValueMap;
+    this.Type = Type;
+  }
   static ID_PARTS_REGEXP = /(?<qualifier>[a-z])(?<number>\d+)/gim;
   type = "CommonState";
-  Path;
-  Id;
-  Readonly;
-  Unit;
-  Text;
-  Type;
-  ValueMap;
   idParts = void 0;
-  constructor(path, id, text, unit, readonly = true, valueMap = [], type = "number") {
-    this.Path = path;
-    this.Id = id;
-    this.Text = text;
-    this.Unit = unit;
-    this.Readonly = readonly;
-    this.ValueMap = valueMap;
-    this.Type = type;
+  getIdParts() {
+    if (!this.idParts) {
+      this.idParts = this.doGetIdParts(this.Id);
+    }
+    return this.idParts;
   }
-  static getIdParts(id) {
+  doGetIdParts(id) {
     var _a, _b, _c;
     const groups = (_c = (_b = (_a = id.matchAll(CommonState.ID_PARTS_REGEXP)) == null ? void 0 : _a.next()) == null ? void 0 : _b.value) == null ? void 0 : _c.groups;
     if (!groups) {
@@ -60,8 +65,26 @@ class CommonState {
     }
     return { Qualifier: groups.qualifier, Number: Number(groups.number) };
   }
-  getStateId() {
-    return `${this.Path}.${this.Id}`;
+  getPath(flavor = 0 /* Id */, replaceRegExp, language = "en") {
+    var _a;
+    let segments = [this.Path];
+    switch (flavor) {
+      case 0 /* Id */:
+        segments.push(this.Id);
+        break;
+      case 1 /* Description */:
+        let segment = typeof this.Text === "string" ? this.Text : (_a = this.Text[language]) != null ? _a : this.Text["en"];
+        segment = segment.replaceAll(".", "");
+        segments.push(segment);
+        break;
+      default:
+        throw new AdapterError(`Unknown path flavor '${flavor}'`);
+    }
+    if (replaceRegExp) {
+      segments = segments.map((segment) => segment.replace(replaceRegExp, "_"));
+    }
+    const path = segments.join(".");
+    return path;
   }
   getRole() {
     if (this.Unit === "\xB0C") {
@@ -85,7 +108,7 @@ class CommonState {
     return common;
   }
   normalizeValue(value) {
-    switch (this.Id[0]) {
+    switch (this.getIdParts().Qualifier) {
       case "D":
         return this.toBoolean(value);
       case "A":
@@ -124,14 +147,17 @@ class CommonState {
 }
 class HexAnalogState extends CommonState {
   constructor(path, idPrimary, idSecondary, text) {
-    if (CommonState.getIdParts(idPrimary).Qualifier !== "A" || CommonState.getIdParts(idSecondary).Qualifier !== "A") {
-      throw new AdapterError(`Only analog values can be hex (${idPrimary}, ${idSecondary})`);
-    }
     super(path, idPrimary, text, "kWh", true, [], "number");
     this.idPrimary = idPrimary;
     this.idSecondary = idSecondary;
+    if (!this.hasValidIds(idPrimary, idSecondary)) {
+      throw new AdapterError(`Only analog values can be hex (${idPrimary}, ${idSecondary})`);
+    }
   }
   type = "HexAnalogState";
+  hasValidIds(primaryId, secondaryId) {
+    return this.doGetIdParts(primaryId).Qualifier === "A" && this.doGetIdParts(secondaryId).Qualifier == "A";
+  }
   normalizeHexValue(firstValue, secondaryValue) {
     if (!firstValue || !secondaryValue) {
       throw new AdapterError(
@@ -191,13 +217,24 @@ class UnknownTagResponse extends TagResponse {
   }
 }
 class WaterkotteError extends Error {
-  constructor(code, message) {
+  constructor(message, code) {
     super(message);
     this.code = code;
+    if (code === void 0) {
+      switch (message) {
+        case WaterkotteError.NEED_LOGIN_MSG:
+          this.code = WaterkotteError.LOGIN_REQUIRED;
+          break;
+      }
+    }
   }
   static TOO_MANY_USERS = -37;
   static USER_DOES_NOT_EXIST = -49;
   static PASS_DONT_MATCH = -45;
+  static LOGIN_REQUIRED = -88;
+  static NEED_LOGIN_MSG = "#E_NEED_LOGIN";
+  static RELOGIN_ATTEMPT_MSG = "#E_RE-LOGIN_ATTEMPT";
+  static ERROR_INDICATOR = "#E_";
 }
 class AdapterError extends Error {
   constructor(message) {
@@ -207,6 +244,7 @@ class AdapterError extends Error {
 class RethrowError extends AdapterError {
   constructor(innerError, message = innerError.message) {
     super(message);
+    this.innerError = innerError;
   }
 }
 // Annotate the CommonJS export names for ESM import in node:
@@ -216,6 +254,7 @@ class RethrowError extends AdapterError {
   EnumState,
   HexAnalogState,
   IndicatorState,
+  PathFlavor,
   ReadOnlyEnumState,
   ReadOnlyState,
   RethrowError,

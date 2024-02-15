@@ -2,6 +2,11 @@ interface Path {
     Id: string;
 }
 
+export enum PathFlavor {
+    Id,
+    Description,
+}
+
 export class CommonState implements Path {
     private static readonly ID_PARTS_REGEXP = /(?<qualifier>[a-z])(?<number>\d+)/gim;
     readonly type: string = 'CommonState';
@@ -33,8 +38,28 @@ export class CommonState implements Path {
         return { Qualifier: groups.qualifier, Number: Number(groups.number) };
     }
 
-    getStateId(): string {
-        return `${this.Path}.${this.Id}`;
+    getPath(flavor: PathFlavor = PathFlavor.Id, replaceRegExp?: RegExp, language: ioBroker.Languages = 'en'): string {
+        let segments: string[] = [this.Path];
+
+        switch (flavor) {
+            case PathFlavor.Id:
+                segments.push(this.Id);
+                break;
+            case PathFlavor.Description:
+                let segment = typeof this.Text === 'string' ? this.Text : this.Text[language] ?? this.Text['en'];
+                segment = segment.replaceAll('.', '');
+                segments.push(segment);
+                break;
+            default:
+                throw new AdapterError(`Unknown path flavor '${flavor}'`);
+        }
+
+        if (replaceRegExp) {
+            segments = segments.map((segment) => segment.replace(replaceRegExp, '_'));
+        }
+
+        const path = segments.join('.');
+        return path;
     }
 
     getRole(): string {
@@ -249,11 +274,24 @@ export class WaterkotteError extends Error {
     static TOO_MANY_USERS = -37;
     static USER_DOES_NOT_EXIST = -49;
     static PASS_DONT_MATCH = -45;
+    static LOGIN_REQUIRED = -88;
+    static NEED_LOGIN_MSG = '#E_NEED_LOGIN';
+    static RELOGIN_ATTEMPT_MSG = '#E_RE-LOGIN_ATTEMPT';
+    static ERROR_INDICATOR = '#E_';
+
     constructor(
-        public code: number,
         message: string,
+        public code?: number,
     ) {
         super(message);
+
+        if (code === undefined) {
+            switch (message) {
+                case WaterkotteError.NEED_LOGIN_MSG:
+                    this.code = WaterkotteError.LOGIN_REQUIRED;
+                    break;
+            }
+        }
     }
 }
 
@@ -264,7 +302,10 @@ export class AdapterError extends Error {
 }
 
 export class RethrowError extends AdapterError {
-    constructor(innerError: Error, message: string = innerError.message) {
+    constructor(
+        public innerError: Error,
+        message: string = innerError.message,
+    ) {
         super(message);
     }
 }

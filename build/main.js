@@ -18,14 +18,12 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var utils = __toESM(require("@iobroker/adapter-core"));
-var import_states = require("./states");
 var import_types = require("./types");
-var import_waterkotte = require("./waterkotte");
+var import_waterkotteheatpump = require("./waterkotteheatpump");
 class WaterkotteEasycon extends utils.Adapter {
-  states = [];
   api;
   updateParametersInterval;
-  login = {};
+  knownObjects = {};
   constructor(options = {}) {
     super({
       ...options,
@@ -34,43 +32,102 @@ class WaterkotteEasycon extends utils.Adapter {
     this.on("ready", this.onReady.bind(this));
   }
   async onReady() {
-    var _a;
     this.setStateAsync("info.connection", false, true);
-    this.api = new import_waterkotte.WaterkotteCgi(this.config.ipAddress, this.log);
-    try {
-      this.login = await this.api.loginAsync(this.config.username, this.config.password);
-      this.log.debug("Successfully logged in");
-      await this.setStateAsync("info.connection", true, true);
-      await this.setErrorAsync("");
-    } catch (e) {
-      let message = String(e);
-      this.log.warn("error " + message);
-      if (e instanceof import_types.WaterkotteError) {
-        message = `${e.code} - ${e.message}`;
-      }
-      this.log.error(message);
-      await this.setErrorAsync(message);
+    this.knownObjects = {};
+    if (this.updateParametersInterval) {
+      clearInterval(this.updateParametersInterval);
+    }
+    if (!await this.updateAndHandleConfigAsync()) {
       return;
     }
-    this.states = (0, import_states.getStates)(
-      (_a = this.config.pollStatesOf) != null ? _a : ["Heizen", "K\xFChlen", "Wasser", "Energiebilanz", "Messwerte", "Status"]
-    );
-    await this.updateParametersAsync(this.states);
-    const interval = this.setInterval(
-      async (states) => await this.updateParametersAsync(states),
-      this.config.pollingInterval,
-      this.states
-    );
-    if (interval) {
-      this.updateParametersInterval = interval;
+    this.api = new import_waterkotteheatpump.WaterkotteHeatPump(this.config.ipAddress, this.config.username, this.config.password, this.log);
+    try {
+      const response = await this.updateParametersAsync();
+      if (response instanceof Error) {
+        let message = void 0;
+        if (response instanceof import_types.WaterkotteError) {
+          message = `${response.code} - ${response.message}`;
+        }
+        this.log.error(`Unhandled error on adapter startup: ${message != null ? message : message = String(response)}`);
+        this.log.error(`Callstack: ${response.stack}`);
+        await this.setMessageStateAsync(message);
+        return;
+      }
+      this.log.info("Successfully logged in");
+      await this.setStateAsync("info.connection", true, true);
+      await this.setMessageStateAsync("");
+      const interval = this.setInterval(
+        async () => await this.updateParametersAsync(),
+        this.config.pollingInterval
+      );
+      if (interval) {
+        this.updateParametersInterval = interval;
+      }
+    } catch (e) {
+      this.log.error(`Unhandled error on adapter startup: ${e}`);
+      if (e instanceof Error) {
+        this.log.error(`Callstack: ${e.stack}`);
+      }
+      await this.setMessageStateAsync(`Unhandled error on adapter startup: ${String(e)}`);
+      return;
     }
   }
-  async updateParametersAsync(states) {
+  async checkConfig() {
+    let configName = "";
+    if (!this.config.ipAddress) {
+      configName = "ip address";
+    } else if (!this.config.username) {
+      configName = "username";
+    } else if (!this.config.password) {
+      configName = "password";
+    }
+    if (!configName) {
+      return true;
+    }
+    const message = `Unable to connect to heat pump: missing ${configName}`;
+    this.log.warn(message);
+    await this.setMessageStateAsync(message);
+    return false;
+  }
+  async updateAndHandleConfigAsync() {
+    if (!await this.checkConfig()) {
+      return false;
+    }
+    const info = await this.getObjectAsync("info");
+    const lastConfig = info == null ? void 0 : info.native;
+    if (lastConfig) {
+      if (lastConfig.pathFlavor != this.config.pathFlavor || lastConfig.removeWhitespace != this.config.removeWhitespace) {
+        this.log.debug("Config changed, delete all states");
+        await this.deleteAllObjectsAsync();
+      }
+    }
+    await this.extendObjectAsync("info", { native: this.config });
+    return true;
+  }
+  async deleteAllObjectsAsync() {
+    const objects = await this.getObjectListAsync({
+      startkey: this.namespace
+    });
+    if (objects.rows) {
+      const idRoot = this.namespace + ".";
+      const rootObjects = Array.from(
+        new Set(
+          objects.rows.filter((x) => x.id.includes(idRoot)).map((x) => x.id.replace(idRoot, "").split(".")[0])
+        )
+      ).filter((x) => !x.startsWith("info"));
+      for (const obj of rootObjects) {
+        this.log.debug("delete " + obj);
+        await this.delObjectAsync(obj, { recursive: true });
+      }
+    }
+    return true;
+  }
+  async updateParametersAsync() {
     if (!this.api) {
-      throw new Error("Unable to update parameters because api has not been initialized");
+      throw new import_types.AdapterError("Unable to update parameters because api has not been initialized");
     }
     try {
-      const tagResponses = await this.api.getTagsAsync(states, this.login);
+      const tagResponses = await this.api.requestTagsAsync();
       for (const tagResponse of tagResponses) {
         if (tagResponse.response.status != import_types.TagResponse.STATUS_OK) {
           this.log.warn(
@@ -81,48 +138,86 @@ class WaterkotteEasycon extends utils.Adapter {
         if (!tagResponse.state) {
           continue;
         }
-        const id = tagResponse.state.getStateId();
-        await this.extendObjectAsync(id, {
-          type: "state",
-          common: tagResponse.state.getCommonObject(),
-          native: {}
-        });
-        await this.setStateAsync(
-          id,
-          tagResponse.state.normalizeValue(Number(tagResponse.response.value)),
-          true
+        const path = await this.createObjectIfNotExists(
+          tagResponse.state.Id,
+          () => {
+            var _a;
+            let path2 = tagResponse.state.getPath(
+              this.config.pathFlavor,
+              this.FORBIDDEN_CHARS,
+              (_a = this.language) != null ? _a : "en"
+            );
+            if (this.config.removeWhitespace) {
+              path2 = path2.replaceAll(/\s/g, "_");
+            }
+            return path2;
+          },
+          () => ({
+            type: "state",
+            common: tagResponse.state.getCommonObject(),
+            native: {
+              id: tagResponse.state.Id
+            }
+          }),
+          tagResponse.state
         );
+        await this.setStateAsync(path, tagResponse.state.normalizeValue(tagResponse.response.value), true);
       }
+      await this.setMessageStateAsync("");
     } catch (e) {
-      let message = "unknown";
-      if (e instanceof import_types.WaterkotteError) {
-        message = `Received unknown error from heat pump: ${e.code} - ${e.message}`;
-      } else if (typeof e === "string") {
-        message = e;
-      } else if (e instanceof Error) {
-        message = e.message;
+      let returnError;
+      if (e instanceof Error) {
+        if (e instanceof import_types.WaterkotteError) {
+          returnError = e;
+        } else {
+          returnError = new import_types.RethrowError(e);
+        }
+      } else {
+        returnError = new import_types.AdapterError(`Error during update: '${e}'`);
       }
-      this.log.warn(`Error during update: '${message}'`);
-      await this.setErrorAsync(message);
+      this.log.warn(returnError.message);
+      await this.setMessageStateAsync(returnError.message);
+      return returnError;
     }
   }
-  async setErrorAsync(message) {
-    await this.extendObjectAsync("info.lastError", {
-      type: "state",
-      common: {
-        write: false,
-        type: "string"
-      },
-      native: {}
-    });
-    await this.setStateAsync("info.lastError", message, true);
+  async setMessageStateAsync(message) {
+    await this.createObjectIfNotExists(
+      "info.message",
+      () => "info.message",
+      () => ({
+        type: "state",
+        common: {
+          write: false,
+          type: "string"
+        },
+        native: {}
+      }),
+      message
+    );
+    await this.setStateAsync("info.message", message, true);
+  }
+  async createObjectIfNotExists(id, getPath, getObjPart, item) {
+    const cachedItem = this.knownObjects[id];
+    const cachedItemPath = cachedItem == null ? void 0 : cachedItem["path"];
+    if (!cachedItemPath) {
+      const path = getPath();
+      await this.extendObjectAsync(path, getObjPart());
+      this.knownObjects[id] = { path, item };
+      this.log.silly(`${path} added to cache`);
+      return path;
+    } else {
+      this.log.silly(`${cachedItemPath} found in cache`);
+      return cachedItemPath;
+    }
   }
   onUnload(callback) {
     var _a;
     try {
       clearInterval(this.updateParametersInterval);
       try {
-        (_a = this.api) == null ? void 0 : _a.logoutAsync().then().finally();
+        (_a = this.api) == null ? void 0 : _a.disconnectAsync().then(() => {
+          this.log.info("Successfully logged out");
+        }).finally();
       } catch {
       }
       callback();

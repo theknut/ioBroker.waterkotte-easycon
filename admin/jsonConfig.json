@@ -4,25 +4,165 @@
     "items": {
         "ipAddress": {
             "type": "text",
-            "label": "IP",
-            "newLine": true
+            "label": {
+                "en": "Ip address",
+                "de": "IP-Adresse",
+                "ru": "Ip адрес",
+                "pt": "Endereço Ip",
+                "nl": "Ip adres",
+                "fr": "Adresse IP",
+                "it": "Indirizzo Ip",
+                "es": "Dirección de identificación",
+                "pl": "Adres IP",
+                "uk": "Ip адреса",
+                "zh-cn": "叶子地址"
+            },
+            "sm": 3
         },
         "username": {
             "type": "text",
-            "label": "Username",
-            "default": "waterkotte",
-            "newLine": true
+            "label": {
+                "en": "Username",
+                "de": "Benutzername",
+                "ru": "Имя пользователя",
+                "pt": "Nome de utilizador",
+                "nl": "Gebruikersnaam",
+                "fr": "Nom d'utilisateur",
+                "it": "Nome utente",
+                "es": "Nombre de usuario",
+                "pl": "Nazwa użytkownika",
+                "uk": "Ім'я користувача",
+                "zh-cn": "用户名"
+            },
+            "help": {
+                "en": "Use 'waterkotte' if unknown",
+                "de": "Verwenden Sie 'waterkotte', wenn unbekannt",
+                "ru": "Используйте 'waterkotte', если неизвестно",
+                "pt": "Use 'waterkotte' se desconhecido",
+                "nl": "Gebruik 'waterkotte' indien onbekend",
+                "fr": "Utiliser 'waterkotte' si inconnu",
+                "it": "Utilizzare 'waterkotte' se sconosciuto",
+                "es": "Use 'waterkotte' si se desconoce",
+                "pl": "Użyj 'waterkotte', jeśli jest nieznany",
+                "uk": "Використовуйте 'waterkotte' якщо невідомо",
+                "zh-cn": "如果未知, 请使用“ waterkotte ”"
+            },
+            "sm": 3
         },
         "password": {
             "type": "password",
-            "default": "waterkotte",
-            "label": "Password"
+            "help": {
+                "en": "Use 'waterkotte' if unknown",
+                "de": "Verwenden Sie 'waterkotte', wenn unbekannt",
+                "ru": "Используйте 'waterkotte', если неизвестно",
+                "pt": "Use 'waterkotte' se desconhecido",
+                "nl": "Gebruik 'waterkotte' indien onbekend",
+                "fr": "Utiliser 'waterkotte' si inconnu",
+                "it": "Utilizzare 'waterkotte' se sconosciuto",
+                "es": "Use 'waterkotte' si se desconoce",
+                "pl": "Użyj 'waterkotte', jeśli jest nieznany",
+                "uk": "Використовуйте 'waterkotte' якщо невідомо",
+                "zh-cn": "如果未知, 请使用“ waterkotte ”"
+            },
+            "label": {
+                "en": "Password",
+                "de": "Passwort",
+                "ru": "Пароль",
+                "pt": "Senha",
+                "nl": "Wachtwoord",
+                "fr": "Mot de passe",
+                "it": "Password",
+                "es": "Contraseña",
+                "pl": "Hasło",
+                "uk": "Логін",
+                "zh-cn": "密码"
+            },
+            "sm": 3
         },
         "pollingInterval": {
             "type": "number",
             "default": 300000,
-            "label": "Polling interval",
-            "help": "In milliseconds (default = 300000 ms = 5 m)"
+            "label": {
+                "en": "Update interval",
+                "de": "Update-Intervall",
+                "ru": "Интервал обновления",
+                "pt": "Intervalo de atualização",
+                "nl": "Bijwerken interval",
+                "fr": "Intervalle de mise à jour",
+                "it": "Intervallo di aggiornamento",
+                "es": "Intervalo de actualización",
+                "pl": "Przedział aktualizacji",
+                "uk": "Період оновлення",
+                "zh-cn": "更新间隔"
+            },
+            "help": {
+                "en": "In milliseconds (default = 300000 ms = 5 m)",
+                "de": "In Millisekunden (Standard = 300000 ms = 5 m)",
+                "ru": "В миллисекундах (по умолчанию = 30000 мс = 5 м)",
+                "pt": "Em milissegundos (padrão = 300000 ms = 5 m)",
+                "nl": "In milliseconden (standaard = 300000 ms = 5 m)",
+                "fr": "En millisecondes (par défaut = 300 000 ms = 5 m)",
+                "it": "In millisecondi (default = 300000 ms = 5 m)",
+                "es": "En milisegundos (por defecto = 300000 ms = 5 m)",
+                "pl": "W milisekundach (domyślnie = 300000 ms = 5 m)",
+                "uk": "У мілісекундах (default = 300000 мс = 5 м)",
+                "zh-cn": "毫秒( 默认 = 300 000 ms = 5 m)"
+            },
+            "sm": 3
+        },
+        "pathFlavor": {
+            "type": "select",
+            "options": [
+                { "label": "Path + Tag Id (e.g. 'Heating.A32')", "value": 0 },
+                { "label": "Path + Description (e.g. 'Heating.Target_value')", "value": 1 }
+            ],
+            "default": 1,
+            "label": {
+                "en": "Id format",
+                "de": "Id Format",
+                "ru": "Формат Id",
+                "pt": "Formato de identificação",
+                "nl": "Id-formaat",
+                "fr": "Format Id",
+                "it": "Formato Id",
+                "es": "Formato Id",
+                "pl": "Format Id",
+                "uk": "Формат Id",
+                "zh-cn": "Id 格式"
+            },
+            "help": {
+                "en": "Select how the id should be formatted",
+                "de": "Wählen Sie aus, wie die Id formatiert werden soll",
+                "ru": "Выберите, как следует отформатировать id",
+                "pt": "Selecione como o id deve ser formatado",
+                "nl": "Selecteer hoe de id geformatteerd moet worden",
+                "fr": "Sélectionnez comment l'identifiant doit être formaté",
+                "it": "Selezionare come l'id dovrebbe essere formattato",
+                "es": "Seleccione cómo debe formatear el id",
+                "pl": "Wybierz sposób formatowania identyfikatora",
+                "uk": "Виберіть, як id слід відформатувати",
+                "zh-cn": "选择编号的格式"
+            },
+            "sm": 6,
+            "newLine": true
+        },
+        "removeWhitespace": {
+            "type": "checkbox",
+            "default": true,
+            "label": {
+                "en": "Remove space from id",
+                "de": "Leerzeichen in der Id entfernen",
+                "ru": "Удалить пространство от id",
+                "pt": "Remover espaço de id",
+                "nl": "Spatie verwijderen uit id",
+                "fr": "Supprimer l'espace de l'id",
+                "it": "Rimuovere lo spazio da id",
+                "es": "Quitar espacio de id",
+                "pl": "Usuń miejsce z id",
+                "uk": "Видалити місце з id",
+                "zh-cn": "从 id 中删除空格"
+            },
+            "sm": 6
         }
     }
 }

@@ -21,31 +21,40 @@ __export(dictionary_exports, {
   WaterkotteDictionary: () => WaterkotteDictionary
 });
 module.exports = __toCommonJS(dictionary_exports);
+var import_types = require("./types");
 class WaterkotteDictionary {
   constructor(forbiddenChars) {
     this.forbiddenChars = forbiddenChars;
   }
-  getTranslation(...identifiers) {
-    return this.toStringOrTranslated(
-      identifiers.map((identifier) => {
-        const dict = this["lng" + identifier];
-        return !dict || !Array.isArray(dict) ? dict : [identifier];
-      })
-    );
+  getTranslations(identifiers, language, separator = ".") {
+    var _a;
+    if (!language) {
+      throw new import_types.AdapterError(`Could not get '${language}' translation for ${identifiers}`);
+    }
+    const translated = this.getTranslation(identifiers, separator);
+    const translatedLanguage = (_a = translated[language]) != null ? _a : translated["en"];
+    if (!translatedLanguage) {
+      throw new import_types.AdapterError(`Could neither get '${language}' nor 'en' translation for ${identifiers}`);
+    }
+    return translatedLanguage;
   }
-  toStringOrTranslated(dicts) {
+  getTranslation(identifiers, separator = ".") {
+    const translated = this.toStringOrTranslated(
+      (typeof identifiers === "string" ? [identifiers] : identifiers).map((identifier) => {
+        const dict = this["lng" + identifier];
+        return Array.isArray(dict) ? dict : [identifier];
+      }),
+      separator
+    );
+    return translated;
+  }
+  toStringOrTranslated(dicts, separator = ".") {
     return {
-      de: dicts.map((dict) => dict[0]).join("."),
-      en: dicts.map((dict) => dict.length > 1 ? dict[1] : dict[0]).join("."),
-      fr: dicts.map((dict) => dict.length > 2 ? dict[2] : dict.length > 1 ? dict[1] : dict[0]).join(".")
+      de: dicts.map((dict) => dict[0]).join(separator),
+      en: dicts.map((dict) => dict.length > 1 ? dict[1] : dict[0]).join(separator),
+      fr: dicts.map((dict) => dict.length > 2 ? dict[2] : dict.length > 1 ? dict[1] : dict[0]).join(separator)
     };
   }
-  offAutoManuell = {
-    0: this.getTranslation("Off"),
-    1: this.getTranslation("Auto"),
-    2: this.getTranslation("Manual")
-  };
-  noneDayAll = { 0: this.getTranslation("None"), 1: this.getTranslation("Day"), 2: this.getTranslation("All") };
   aLNG = ["de", "en", "fr"];
   iLng = this.aLNG.indexOf("de");
   lngDE = ["Deutsch", "Deutsch", "Deutsch"];
@@ -198,7 +207,8 @@ class WaterkotteDictionary {
   lngMix = ["Mischerkreis"];
   lngTabMix = ["Mischerkreis"];
   lngStor = ["Speicherentladepumpe"];
-  lngPV = ["Photovoltaik"];
+  lngPV = ["Photovoltaik", "PV", "Photovolta\xEFque"];
+  lngPVChange = ["\xE4nderung", "Change", "Changement"];
   lngPVDesc = ["Temperatur\xE4nderung ... w\xE4hrend PV-Ertrag"];
   lngComm = ["Kommunikation"];
   lngIO = ["Ein- und Ausg\xE4nge"];
@@ -2449,6 +2459,16 @@ class WaterkotteDictionary {
   aI2196 = this.aI2195;
   aI2197 = this.aI2195;
   aI2198 = this.aI2195;
+  offAutoManuell = {
+    0: this.getTranslation("Off"),
+    1: this.getTranslation("Auto"),
+    2: this.getTranslation("Manual")
+  };
+  noneDayAll = { 0: this.getTranslation("None"), 1: this.getTranslation("Day"), 2: this.getTranslation("All") };
+  openClosed = {
+    0: this.getTranslation("Open"),
+    1: this.getTranslation("Closed")
+  };
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

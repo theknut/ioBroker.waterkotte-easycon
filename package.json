@@ -88,7 +88,7 @@
     "translate": "translate-adapter",
     "release": "release-script",
     "test:jest": "jest --verbose",
-    "coverage:jest": "jest --verbose --coverage"
+    "coverage:jest": "jest --verbose --coverage --silent"
   },
   "nyc": {
     "include": [
