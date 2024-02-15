@@ -46,11 +46,9 @@ export class CommonState implements Path {
                 segments.push(this.Id);
                 break;
             case PathFlavor.Description:
-                if (typeof this.Text === 'string') {
-                    segments.push(this.Text);
-                } else {
-                    segments.push(this.Text[language] ?? this.Text['en']);
-                }
+                let segment = typeof this.Text === 'string' ? this.Text : this.Text[language] ?? this.Text['en'];
+                segment = segment.replaceAll('.', '');
+                segments.push(segment);
                 break;
             default:
                 throw new AdapterError(`Unknown path flavor '${flavor}'`);

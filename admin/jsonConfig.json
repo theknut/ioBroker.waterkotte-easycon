@@ -113,8 +113,8 @@
         "pathFlavor": {
             "type": "select",
             "options": [
-                { "label": "Path + Tag Id (e.g. 'Hot water.A38'", "value": 0 },
-                { "label": "Path + Description (e.g. 'Hot water.Target value'", "value": 1 }
+                { "label": "Path + Tag Id (e.g. 'Heating.A32')", "value": 0 },
+                { "label": "Path + Description (e.g. 'Heating.Target_value')", "value": 1 }
             ],
             "default": 1,
             "label": {

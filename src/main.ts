@@ -11,7 +11,7 @@ import { WaterkotteHeatPump } from './waterkotteheatpump';
 class WaterkotteEasycon extends utils.Adapter {
     api: WaterkotteHeatPump | undefined;
     updateParametersInterval: ioBroker.Interval | undefined;
-    knownObjects: Record<string, any> = {};
+    knownObjects: Record<string, CacheItem> = {};
     public constructor(options: Partial<utils.AdapterOptions> = {}) {
         super({
             ...options,
@@ -25,6 +25,11 @@ class WaterkotteEasycon extends utils.Adapter {
      */
     private async onReady(): Promise<void> {
         this.setStateAsync('info.connection', false, true);
+
+        this.knownObjects = {};
+        if (this.updateParametersInterval) {
+            clearInterval(this.updateParametersInterval);
+        }
 
         if (!(await this.updateAndHandleConfigAsync())) {
             return;
@@ -86,6 +91,7 @@ class WaterkotteEasycon extends utils.Adapter {
         const message = `Unable to connect to heat pump: missing ${configName}`;
         this.log.warn(message);
         await this.setMessageStateAsync(message);
+
         return false;
     }
 
@@ -102,6 +108,7 @@ class WaterkotteEasycon extends utils.Adapter {
                 lastConfig.pathFlavor != this.config.pathFlavor ||
                 lastConfig.removeWhitespace != this.config.removeWhitespace
             ) {
+                this.log.debug('Config changed, delete all states');
                 await this.deleteAllObjectsAsync();
             }
         }
@@ -110,22 +117,27 @@ class WaterkotteEasycon extends utils.Adapter {
         return true;
     }
 
-    private async deleteAllObjectsAsync(): Promise<void> {
+    private async deleteAllObjectsAsync(): Promise<boolean> {
         const objects = await this.getObjectListAsync({
             startkey: this.namespace,
         });
 
         if (objects.rows) {
-            const infoObjectId = `${this.namespace}.info`;
-            for (const obj of objects.rows.filter(
-                (x) => x.id.startsWith(this.namespace) && !x.id.replace(this.namespace + '.', '').includes('.'),
-            )) {
-                if (obj.id.startsWith(infoObjectId)) {
-                    this.log.info('delete ' + obj.id);
-                }
+            const idRoot = this.namespace + '.';
+            const rootObjects = Array.from(
+                new Set(
+                    objects.rows
+                        .filter((x) => x.id.includes(idRoot))
+                        .map((x) => x.id.replace(idRoot, '').split('.')[0]),
+                ),
+            ).filter((x) => !x.startsWith('info'));
+
+            for (const obj of rootObjects) {
+                this.log.debug('delete ' + obj);
+                await this.delObjectAsync(obj, { recursive: true });
             }
-            return;
         }
+        return true;
     }
 
     private async updateParametersAsync(): Promise<void | Error> {
@@ -148,26 +160,31 @@ class WaterkotteEasycon extends utils.Adapter {
                     continue;
                 }
 
-                let id = tagResponse.state.getPath(this.config.pathFlavor, this.FORBIDDEN_CHARS, this.language ?? 'en');
-                if (this.config.removeWhitespace) {
-                    id = id.replaceAll(/\s/g, '_');
-                }
-
-                //id = id.trim('.');
-
-                await this.createObjectIfNotExists(
-                    id,
-                    {
-                        type: 'state',
-                        common: tagResponse.state.getCommonObject(),
-                        native: {
-                            id: tagResponse.state.Id,
-                        },
+                const path = await this.createObjectIfNotExists(
+                    tagResponse.state.Id,
+                    () => {
+                        let path = tagResponse.state.getPath(
+                            this.config.pathFlavor,
+                            this.FORBIDDEN_CHARS,
+                            this.language ?? 'en',
+                        );
+                        if (this.config.removeWhitespace) {
+                            path = path.replaceAll(/\s/g, '_');
+                        }
+                        return path;
                     },
+                    () =>
+                        <ioBroker.PartialObject>{
+                            type: 'state',
+                            common: tagResponse.state.getCommonObject(),
+                            native: {
+                                id: tagResponse.state.Id,
+                            },
+                        },
                     tagResponse.state,
                 );
 
-                await this.setStateAsync(id, tagResponse.state.normalizeValue(tagResponse.response.value), true);
+                await this.setStateAsync(path, tagResponse.state.normalizeValue(tagResponse.response.value), true);
             }
 
             await this.setMessageStateAsync('');
@@ -193,23 +210,38 @@ class WaterkotteEasycon extends utils.Adapter {
     private async setMessageStateAsync(message: string): Promise<void> {
         await this.createObjectIfNotExists(
             'info.message',
-            {
-                type: 'state',
-                common: {
-                    write: false,
-                    type: 'string',
+            () => 'info.message',
+            () =>
+                <ioBroker.PartialObject>{
+                    type: 'state',
+                    common: {
+                        write: false,
+                        type: 'string',
+                    },
+                    native: {},
                 },
-                native: {},
-            },
             message,
         );
         await this.setStateAsync('info.message', message, true);
     }
 
-    private async createObjectIfNotExists(id: string, objPart: ioBroker.PartialObject, item: any): Promise<void> {
-        if (!this.knownObjects[id]) {
-            await this.extendObjectAsync(id, objPart);
-            this.knownObjects[id] = item;
+    private async createObjectIfNotExists(
+        id: string,
+        getPath: () => string,
+        getObjPart: () => ioBroker.PartialObject,
+        item: any,
+    ): Promise<string> {
+        const cachedItem = this.knownObjects[id];
+        const cachedItemPath = cachedItem?.['path'];
+        if (!cachedItemPath) {
+            const path = getPath();
+            await this.extendObjectAsync(path, getObjPart());
+            this.knownObjects[id] = { path: path, item: item };
+            this.log.silly(`${path} added to cache`);
+            return path;
+        } else {
+            this.log.silly(`${cachedItemPath} found in cache`);
+            return cachedItemPath;
         }
     }
 
@@ -255,3 +287,8 @@ if (require.main !== module) {
     // otherwise start the instance directly
     (() => new WaterkotteEasycon())();
 }
+
+type CacheItem = {
+    path: string;
+    item: any;
+};

@@ -33,6 +33,10 @@ class WaterkotteEasycon extends utils.Adapter {
   }
   async onReady() {
     this.setStateAsync("info.connection", false, true);
+    this.knownObjects = {};
+    if (this.updateParametersInterval) {
+      clearInterval(this.updateParametersInterval);
+    }
     if (!await this.updateAndHandleConfigAsync()) {
       return;
     }
@@ -93,6 +97,7 @@ class WaterkotteEasycon extends utils.Adapter {
     const lastConfig = info == null ? void 0 : info.native;
     if (lastConfig) {
       if (lastConfig.pathFlavor != this.config.pathFlavor || lastConfig.removeWhitespace != this.config.removeWhitespace) {
+        this.log.debug("Config changed, delete all states");
         await this.deleteAllObjectsAsync();
       }
     }
@@ -104,19 +109,20 @@ class WaterkotteEasycon extends utils.Adapter {
       startkey: this.namespace
     });
     if (objects.rows) {
-      const infoObjectId = `${this.namespace}.info`;
-      for (const obj of objects.rows.filter(
-        (x) => x.id.startsWith(this.namespace) && !x.id.replace(this.namespace + ".", "").includes(".")
-      )) {
-        if (obj.id.startsWith(infoObjectId)) {
-          this.log.info("delete " + obj.id);
-        }
+      const idRoot = this.namespace + ".";
+      const rootObjects = Array.from(
+        new Set(
+          objects.rows.filter((x) => x.id.includes(idRoot)).map((x) => x.id.replace(idRoot, "").split(".")[0])
+        )
+      ).filter((x) => !x.startsWith("info"));
+      for (const obj of rootObjects) {
+        this.log.debug("delete " + obj);
+        await this.delObjectAsync(obj, { recursive: true });
       }
-      return;
     }
+    return true;
   }
   async updateParametersAsync() {
-    var _a;
     if (!this.api) {
       throw new import_types.AdapterError("Unable to update parameters because api has not been initialized");
     }
@@ -132,23 +138,30 @@ class WaterkotteEasycon extends utils.Adapter {
         if (!tagResponse.state) {
           continue;
         }
-        let id = tagResponse.state.getPath(this.config.pathFlavor, this.FORBIDDEN_CHARS, (_a = this.language) != null ? _a : "en");
-        if (this.config.removeWhitespace) {
-          id = id.replaceAll(/\s/g, "_");
-        }
-        id = id.trimEnd(".");
-        await this.createObjectIfNotExists(
-          id,
-          {
+        const path = await this.createObjectIfNotExists(
+          tagResponse.state.Id,
+          () => {
+            var _a;
+            let path2 = tagResponse.state.getPath(
+              this.config.pathFlavor,
+              this.FORBIDDEN_CHARS,
+              (_a = this.language) != null ? _a : "en"
+            );
+            if (this.config.removeWhitespace) {
+              path2 = path2.replaceAll(/\s/g, "_");
+            }
+            return path2;
+          },
+          () => ({
             type: "state",
             common: tagResponse.state.getCommonObject(),
             native: {
               id: tagResponse.state.Id
             }
-          },
+          }),
           tagResponse.state
         );
-        await this.setStateAsync(id, tagResponse.state.normalizeValue(tagResponse.response.value), true);
+        await this.setStateAsync(path, tagResponse.state.normalizeValue(tagResponse.response.value), true);
       }
       await this.setMessageStateAsync("");
     } catch (e) {
@@ -170,22 +183,31 @@ class WaterkotteEasycon extends utils.Adapter {
   async setMessageStateAsync(message) {
     await this.createObjectIfNotExists(
       "info.message",
-      {
+      () => "info.message",
+      () => ({
         type: "state",
         common: {
           write: false,
           type: "string"
         },
         native: {}
-      },
+      }),
       message
     );
     await this.setStateAsync("info.message", message, true);
   }
-  async createObjectIfNotExists(id, objPart, item) {
-    if (!this.knownObjects[id]) {
-      await this.extendObjectAsync(id, objPart);
-      this.knownObjects[id] = item;
+  async createObjectIfNotExists(id, getPath, getObjPart, item) {
+    const cachedItem = this.knownObjects[id];
+    const cachedItemPath = cachedItem == null ? void 0 : cachedItem["path"];
+    if (!cachedItemPath) {
+      const path = getPath();
+      await this.extendObjectAsync(path, getObjPart());
+      this.knownObjects[id] = { path, item };
+      this.log.silly(`${path} added to cache`);
+      return path;
+    } else {
+      this.log.silly(`${cachedItemPath} found in cache`);
+      return cachedItemPath;
     }
   }
   onUnload(callback) {

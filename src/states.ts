@@ -248,10 +248,10 @@ export function getStates(pollStatesOf: string[], language: ioBroker.Languages =
     states.push(getIndicator(status, 'D701'));
     states.push(getIndicator(status, 'D71'));
     states.push(getReadOnlyState(status, 'I5', 'dd', dict.getTranslation(['I5', 'I1260'], ' ')));
-    states.push(getReadOnlyState(status, 'I6', 'mmm', dict.getTranslation(['I5', 'Day'], ' ')));
+    states.push(getReadOnlyState(status, 'I6', 'mm', dict.getTranslation(['I5', 'Day'], ' ')));
     states.push(getReadOnlyState(status, 'I7', 'yy', dict.getTranslation(['I5', 'I1261'], ' ')));
-    states.push(getReadOnlyState(status, 'I8', 'h'));
-    states.push(getReadOnlyState(status, 'I9', 'min', dict.getTranslation('I8')));
+    states.push(getReadOnlyState(status, 'I8', 'h', dict.getTranslations(['I8'], language) + ' Hour'));
+    states.push(getReadOnlyState(status, 'I9', 'min', dict.getTranslations(['I8'], language) + ' Minute'));
 
     const statusDI = `${status}.DigitalInputs`;
     states.push(getIndicator(statusDI, 'D1010'));
