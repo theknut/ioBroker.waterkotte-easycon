@@ -1,8 +1,21 @@
 {
     "common": {
         "name": "waterkotte-easycon",
-        "version": "0.0.1",
+        "version": "0.0.2",
         "news": {
+            "0.0.2": {
+                "en": "prepare for release",
+                "de": "Vorbereitung für den Release",
+                "ru": "подготовка к выпуску",
+                "pt": "preparar para a liberação",
+                "nl": "bereid je voor op vrijlating",
+                "fr": "se préparer à la libération",
+                "it": "prepararsi al rilascio",
+                "es": "prepararse para la liberación",
+                "pl": "przygotować się do uwolnienia",
+                "uk": "підготовка до випуску",
+                "zh-cn": "准备释放"
+            },
             "0.0.1": {
                 "en": "initial release",
                 "de": "Erstveröffentlichung",
@@ -47,7 +60,9 @@
         "authors": ["theknut <theknutcoding@gmail.com>"],
         "keywords": ["waterkotte", "cgi", "heat pump", "wärmepumpe"],
         "license": "MIT",
-        "licenseInformation": { "type": "free" },
+        "licenseInformation": {
+            "type": "free"
+        },
         "platform": "Javascript/Node.js",
         "main": "build/main.js",
         "icon": "waterkotte-easycon.png",
