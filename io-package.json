@@ -59,7 +59,7 @@
         "authors": ["theknut <theknutcoding@gmail.com>"],
         "keywords": ["waterkotte", "cgi", "heat pump", "wärmepumpe"],
         "licenseInformation": {
-            "type": "free"
+            "type": "MIT"
         },
         "platform": "Javascript/Node.js",
         "main": "build/main.js",
