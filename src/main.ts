@@ -57,7 +57,7 @@ class WaterkotteEasycon extends utils.Adapter {
 
             const interval = this.setInterval(
                 async () => await this.updateParametersAsync(),
-                this.config.pollingInterval,
+                this.config.updateInterval * 1000,
             );
 
             if (interval) {
@@ -268,19 +268,6 @@ class WaterkotteEasycon extends utils.Adapter {
             callback();
         } catch (e) {
             callback();
-        }
-    }
-
-    /**
-     * Is called if a subscribed state changes
-     */
-    private onStateChange(id: string, state: ioBroker.State | null | undefined): void {
-        if (state) {
-            // The state was changed
-            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
-        } else {
-            // The state was deleted
-            this.log.info(`state ${id} deleted`);
         }
     }
 }
