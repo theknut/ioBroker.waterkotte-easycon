@@ -9,6 +9,7 @@
     "removeWhitespace": "Eliminar espacio de las identificaciones estatales",
     "updateInterval": "Intervalo de actualización",
     "updateIntervalHelp": "En segundos (predeterminado = 300 segundos = 5 minutos)",
+    "updateIntervalValidator": "Debe ser > 20 y < 86400",
     "username": "Nombre de usuario",
     "waterkotte-easycon adapter settings": "Configuración del adaptador para waterkotte-easycon"
 }

@@ -49,9 +49,11 @@ class WaterkotteDictionary {
     return {
       de: dicts.map((dict) => this.normalize(dict[0], separator)).join(separator),
       en: dicts.map((dict) => this.normalize(dict.length > 1 ? dict[1] : dict[0], separator)).join(separator),
+      // fall back to German
       fr: dicts.map(
         (dict) => this.normalize(dict.length > 2 ? dict[2] : dict.length > 1 ? dict[1] : dict[0], separator)
       ).join(separator)
+      // fall back to English or German
     };
   }
   normalize(str, separator) {

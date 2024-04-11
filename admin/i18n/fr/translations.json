@@ -9,6 +9,7 @@
     "removeWhitespace": "Supprimer l'espace des identifiants d'état",
     "updateInterval": "Intervalle de mise à jour",
     "updateIntervalHelp": "En secondes (par défaut = 300 secondes = 5 minutes)",
+    "updateIntervalValidator": "Doit être > 20 et < 86 400",
     "username": "Nom d'utilisateur",
     "waterkotte-easycon adapter settings": "Paramètres de l'adaptateur pour waterkotte-easycon"
 }

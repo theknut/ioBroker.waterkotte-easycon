@@ -9,6 +9,7 @@
     "removeWhitespace": "Entfernen Sie Leerzeichen aus den Status-IDs",
     "updateInterval": "Updateintervall",
     "updateIntervalHelp": "In Sekunden (Standard = 300 Sekunden = 5 Minuten)",
+    "updateIntervalValidator": "Muss > 20 und < 86400 sein",
     "username": "Nutzername",
     "waterkotte-easycon adapter settings": "Adaptereinstellungen für Waterkotte-Easycon"
 }

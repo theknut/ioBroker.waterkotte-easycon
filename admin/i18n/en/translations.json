@@ -9,6 +9,7 @@
     "removeWhitespace": "Remove space from state id's",
     "updateInterval": "Update interval",
     "updateIntervalHelp": "In seconds (default = 300 seconds = 5 minutes)",
+    "updateIntervalValidator": "Must be > 20 and < 86400",
     "username": "Username",
     "waterkotte-easycon adapter settings": "Adapter settings for waterkotte-easycon"
 }

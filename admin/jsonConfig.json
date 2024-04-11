@@ -32,6 +32,9 @@
             "default": 300,
             "label": "updateInterval",
             "help": "updateIntervalHelp",
+            "validator": "data.updateInterval > 20 && data.updateInterval < 86400",
+            "validatorErrorText": "updateIntervalValidator",
+            "validatorNoSaveOnError": true,
             "sm": 3
         },
         "pathFlavor": {

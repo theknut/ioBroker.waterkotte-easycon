@@ -9,6 +9,7 @@
     "removeWhitespace": "Verwijder spatie uit status-ID's",
     "updateInterval": "Bijwerkingsonderbreking",
     "updateIntervalHelp": "In seconden (standaard = 300 seconden = 5 minuten)",
+    "updateIntervalValidator": "Moet > 20 en < 86400 zijn",
     "username": "Gebruikersnaam",
     "waterkotte-easycon adapter settings": "Adapterinstellingen voor waterkotte-easycon"
 }

@@ -9,6 +9,7 @@
     "removeWhitespace": "Видалити пробіл із ідентифікаторів станів",
     "updateInterval": "Інтервал оновлення",
     "updateIntervalHelp": "У секундах (за замовчуванням = 300 секунд = 5 хвилин)",
+    "updateIntervalValidator": "Має бути > 20 і < 86400",
     "username": "Ім'я користувача",
     "waterkotte-easycon adapter settings": "Налаштування адаптера для waterkotte-easycon"
 }

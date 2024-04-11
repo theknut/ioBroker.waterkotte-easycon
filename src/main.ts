@@ -55,13 +55,20 @@ class WaterkotteEasycon extends utils.Adapter {
             await this.setStateAsync('info.connection', true, true);
             await this.setMessageStateAsync('');
 
+            const limitedUpdateInterval = Math.min(86400, Math.max(20, this.config.updateInterval));
             const interval = this.setInterval(
                 async () => await this.updateParametersAsync(),
-                this.config.updateInterval * 1000,
+                limitedUpdateInterval * 1000,
             );
 
             if (interval) {
                 this.updateParametersInterval = interval;
+            }
+
+            if (this.config.updateInterval != limitedUpdateInterval) {
+                this.log.warn(`Limited update interval to ${limitedUpdateInterval} seconds`);
+            } else {
+                this.log.info('Interval ' + limitedUpdateInterval);
             }
         } catch (e: unknown) {
             this.log.error(`Unhandled error on adapter startup: ${e}`);
