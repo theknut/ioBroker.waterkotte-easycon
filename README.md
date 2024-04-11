@@ -49,7 +49,7 @@ Check your router to find out the IP address of the heat pump and enable static 
 | IP address                      | IP address of the heat pump (see [Connection to heat pump](#Connection-to-heat-pump)) |
 | Username                        | Default `waterkotte`                                                                  |
 | Password                        | Default `waterkotte`                                                                  |
-| Update interval                 | Frequency of updating the values in milliseconds (Default: 300000 ms = 5 m)           |
+| Update interval                 | Frequency of updating the values in milliseconds (Default: 300 seconds = 5 minutes)   |
 | Remove whitespace from state ID | If `State format` is `Path + Description` all whitespaces will be replaced by `_`     |
 
 #### State format
@@ -66,7 +66,11 @@ Check your router to find out the IP address of the heat pump and enable static 
 <!--
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
+    - (theknut) change update interval from milliseconds to seconds
+    - (theknut) add axios timeout
+    - (theknut) remove unused onStateChange handler
 -->
+
 ### 0.0.2 (2024-03-11)
 
 -   (theknut) prepare for release

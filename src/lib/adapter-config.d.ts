@@ -9,7 +9,7 @@ declare global {
             ipAddress: string;
             username: string;
             password: string;
-            pollingInterval: number;
+            updateInterval: number;
             pathFlavor: PathFlavor;
             removeWhitespace: true;
         }

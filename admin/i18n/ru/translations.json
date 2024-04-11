@@ -1,5 +1,14 @@
 {
-    "waterkotte-easycon adapter settings": "Настройки адаптера для waterkotte-easycon",
+    "credentialsHelp": "Если неизвестно, используйте слово «waterkotte».",
+    "ipAddress": "айпи адрес",
     "option1": "Опция 1",
-    "option2": "вариант 2"
+    "option2": "вариант 2",
+    "password": "Пароль",
+    "pathFlavor": "Государственный формат",
+    "pathFlavorHelp": "Выберите способ форматирования идентификаторов штата.",
+    "removeWhitespace": "Удалить пробел из идентификатора состояния",
+    "updateInterval": "Интервал обновления",
+    "updateIntervalHelp": "В секундах (по умолчанию = 300 секунд = 5 минут)",
+    "username": "Имя пользователя",
+    "waterkotte-easycon adapter settings": "Настройки адаптера для Waterkotte-easycon"
 }

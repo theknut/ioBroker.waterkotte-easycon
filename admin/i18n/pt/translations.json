@@ -1,5 +1,14 @@
 {
-    "waterkotte-easycon adapter settings": "Configurações do adaptador para waterkotte-easycon",
+    "credentialsHelp": "Use 'waterkotte' se desconhecido",
+    "ipAddress": "endereço de IP",
     "option1": "Opção 1",
-    "option2": "opção 2"
+    "option2": "opção 2",
+    "password": "Senha",
+    "pathFlavor": "Formato de estado",
+    "pathFlavorHelp": "Selecione como os IDs de estado devem ser formatados",
+    "removeWhitespace": "Remover espaço dos IDs de estado",
+    "updateInterval": "Intervalo de atualização",
+    "updateIntervalHelp": "Em segundos (padrão = 300 segundos = 5 minutos)",
+    "username": "Nome de usuário",
+    "waterkotte-easycon adapter settings": "Configurações do adaptador para waterkotte-easycon"
 }
