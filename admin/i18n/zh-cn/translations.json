@@ -1,5 +1,15 @@
 {
-    "waterkotte-easycon adapter settings": "waterkotte-easycon的适配器设置",
+    "credentialsHelp": "如果未知，请使用“waterkotte”",
+    "ipAddress": "IP地址",
     "option1": "选项1",
-    "option2": "选项2"
+    "option2": "选项2",
+    "password": "密码",
+    "pathFlavor": "状态格式",
+    "pathFlavorHelp": "选择州 ID 的格式",
+    "removeWhitespace": "删除状态 ID 中的空格",
+    "updateInterval": "更新间隔",
+    "updateIntervalHelp": "以秒为单位（默认 = 300 秒 = 5 分钟）",
+    "updateIntervalValidator": "必须 > 20 且 < 86400",
+    "username": "用户名",
+    "waterkotte-easycon adapter settings": "Waterkotte-easycon 的适配器设置"
 }

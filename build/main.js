@@ -14,6 +14,10 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -31,6 +35,9 @@ class WaterkotteEasycon extends utils.Adapter {
     });
     this.on("ready", this.onReady.bind(this));
   }
+  /**
+   * Is called when databases are connected and adapter received configuration.
+   */
   async onReady() {
     this.setStateAsync("info.connection", false, true);
     this.knownObjects = {};
@@ -56,12 +63,18 @@ class WaterkotteEasycon extends utils.Adapter {
       this.log.info("Successfully logged in");
       await this.setStateAsync("info.connection", true, true);
       await this.setMessageStateAsync("");
+      const limitedUpdateInterval = Math.min(86400, Math.max(20, this.config.updateInterval));
       const interval = this.setInterval(
         async () => await this.updateParametersAsync(),
-        this.config.pollingInterval
+        limitedUpdateInterval * 1e3
       );
       if (interval) {
         this.updateParametersInterval = interval;
+      }
+      if (this.config.updateInterval != limitedUpdateInterval) {
+        this.log.warn(`Limited update interval to ${limitedUpdateInterval} seconds`);
+      } else {
+        this.log.info("Interval " + limitedUpdateInterval);
       }
     } catch (e) {
       this.log.error(`Unhandled error on adapter startup: ${e}`);
@@ -215,6 +228,9 @@ class WaterkotteEasycon extends utils.Adapter {
       return cachedItemPath;
     }
   }
+  /**
+   * Is called when adapter shuts down - callback has to be called under any circumstances!
+   */
   onUnload(callback) {
     var _a;
     try {
@@ -228,13 +244,6 @@ class WaterkotteEasycon extends utils.Adapter {
       callback();
     } catch (e) {
       callback();
-    }
-  }
-  onStateChange(id, state) {
-    if (state) {
-      this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
-    } else {
-      this.log.info(`state ${id} deleted`);
     }
   }
 }

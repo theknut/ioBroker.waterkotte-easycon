@@ -18,6 +18,7 @@ export class WaterkotteCgi {
     private baseUrl: string;
     private cgiUrl: string;
     private maximumTagsPerRequest = 75;
+    private axiosTimeout = 30000;
 
     constructor(
         private ipAddress: string,
@@ -146,6 +147,7 @@ export class WaterkotteCgi {
         try {
             const response = await axios.get(url, {
                 headers: { Cookie: login ? `${this.cookieName}=${login.token}` : '' },
+                timeout: this.axiosTimeout,
             });
 
             return processResponse(response);

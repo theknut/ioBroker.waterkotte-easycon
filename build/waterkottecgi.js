@@ -18,6 +18,10 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
@@ -42,6 +46,7 @@ class WaterkotteCgi {
   baseUrl;
   cgiUrl;
   maximumTagsPerRequest = 75;
+  axiosTimeout = 3e4;
   async loginAsync(username = "waterkotte", password = "waterkotte") {
     const loginUrl = `${this.cgiUrl}login?username=${username}&password=${password}`;
     const cookie = await this.requestAsync(loginUrl, (response) => {
@@ -138,7 +143,8 @@ class WaterkotteCgi {
   async requestAsync(url, processResponse, login) {
     try {
       const response = await import_axios.default.get(url, {
-        headers: { Cookie: login ? `${this.cookieName}=${login.token}` : "" }
+        headers: { Cookie: login ? `${this.cookieName}=${login.token}` : "" },
+        timeout: this.axiosTimeout
       });
       return processResponse(response);
     } catch (e) {
@@ -153,6 +159,37 @@ class WaterkotteCgi {
       }
     }
   }
+  /* async writeTags(tags: CommonState[], login: Login): Promise<void> {
+          if (tags.length > 75) {
+              throw new Error(`Maximum amount of tags per request exceeded (${tags.length}/75)`);
+          }
+          throw new Error(`Not implemented`);
+          const record = tags.reduce((acc, item) => ({ ...acc, [item['Id']]: item }), {} as Record<string, CommonState>);
+          var tagUrl =
+              baseUrl +
+              'writeTags?returnValue=true&n=' +
+              tags.length +
+              tags.map((x, i) => '&t' + (i + 1) + '=' + x.Id).join('');
+          const response = await axios.get(tagUrl, {
+              headers: { 'User-Agent': 'ioBroker', Cookie: 'IDALToken=' + login.token },
+          });
+  
+          if (response.status === 200) {
+              for (let match of String(response.data).matchAll(regex)) {
+                  const parameter = match.groups;
+                  console.log(`${parameter.name} ${record[parameter.name].Text} = ${parameter.value}`);
+                  const state = record[parameter.name];
+                  setOrCreate(
+                      '0_userdata.0.Waterkotte.' + state.Path + '.' + state.Id,
+                      state.normalizeValue(parameter.value),
+                      true,
+                      state.getCommonObject(),
+                  );
+              }
+          } else {
+              log('Axios Status - Requesting locales: ' + response.state, 'warn');
+          }
+      }*/
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

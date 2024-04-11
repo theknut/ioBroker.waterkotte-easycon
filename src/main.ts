@@ -55,13 +55,20 @@ class WaterkotteEasycon extends utils.Adapter {
             await this.setStateAsync('info.connection', true, true);
             await this.setMessageStateAsync('');
 
+            const limitedUpdateInterval = Math.min(86400, Math.max(20, this.config.updateInterval));
             const interval = this.setInterval(
                 async () => await this.updateParametersAsync(),
-                this.config.pollingInterval,
+                limitedUpdateInterval * 1000,
             );
 
             if (interval) {
                 this.updateParametersInterval = interval;
+            }
+
+            if (this.config.updateInterval != limitedUpdateInterval) {
+                this.log.warn(`Limited update interval to ${limitedUpdateInterval} seconds`);
+            } else {
+                this.log.info('Interval ' + limitedUpdateInterval);
             }
         } catch (e: unknown) {
             this.log.error(`Unhandled error on adapter startup: ${e}`);
@@ -268,19 +275,6 @@ class WaterkotteEasycon extends utils.Adapter {
             callback();
         } catch (e) {
             callback();
-        }
-    }
-
-    /**
-     * Is called if a subscribed state changes
-     */
-    private onStateChange(id: string, state: ioBroker.State | null | undefined): void {
-        if (state) {
-            // The state was changed
-            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
-        } else {
-            // The state was deleted
-            this.log.info(`state ${id} deleted`);
         }
     }
 }

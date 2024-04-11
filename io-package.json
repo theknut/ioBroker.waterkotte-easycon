@@ -56,8 +56,15 @@
             "uk": "Читання та запис параметрів теплових насосів Waterkotte EasyCon via CGI",
             "zh-cn": "读取和写入 Waterkotte EasyCon 热泵参数"
         },
-        "authors": ["theknut <theknutcoding@gmail.com>"],
-        "keywords": ["waterkotte", "cgi", "heat pump", "wärmepumpe"],
+        "authors": [
+            "theknut <theknutcoding@gmail.com>"
+        ],
+        "keywords": [
+            "waterkotte",
+            "cgi",
+            "heat pump",
+            "wärmepumpe"
+        ],
         "licenseInformation": {
             "type": "free",
             "license": "MIT"
@@ -93,12 +100,17 @@
         "username": "",
         "password": "",
         "ipAddress": "",
-        "pollingInterval": 300000,
+        "pollingInterval": 300,
         "pathFlavor": 1,
         "removeWhitespace": true
     },
-    "protectedNative": ["username", "password"],
-    "encryptedNative": ["password"],
+    "protectedNative": [
+        "username",
+        "password"
+    ],
+    "encryptedNative": [
+        "password"
+    ],
     "objects": [],
     "instanceObjects": [
         {

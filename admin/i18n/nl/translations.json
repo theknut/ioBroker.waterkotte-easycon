@@ -1,5 +1,15 @@
 {
-    "waterkotte-easycon adapter settings": "Adapterinstellingen voor waterkotte-easycon",
+    "credentialsHelp": "Gebruik 'waterkotte' indien onbekend",
+    "ipAddress": "IP adres",
     "option1": "Optie 1",
-    "option2": "Optie 2"
+    "option2": "Optie 2",
+    "password": "Wachtwoord",
+    "pathFlavor": "Staat formaat",
+    "pathFlavorHelp": "Selecteer hoe de status-ID's moeten worden opgemaakt",
+    "removeWhitespace": "Verwijder spatie uit status-ID's",
+    "updateInterval": "Bijwerkingsonderbreking",
+    "updateIntervalHelp": "In seconden (standaard = 300 seconden = 5 minuten)",
+    "updateIntervalValidator": "Moet > 20 en < 86400 zijn",
+    "username": "Gebruikersnaam",
+    "waterkotte-easycon adapter settings": "Adapterinstellingen voor waterkotte-easycon"
 }
