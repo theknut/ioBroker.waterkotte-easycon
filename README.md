@@ -66,10 +66,14 @@ Check your router to find out the IP address of the heat pump and enable static 
 <!--
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
-    - (theknut) change update interval from milliseconds to seconds
-    - (theknut) add axios timeout
-    - (theknut) remove unused onStateChange handler
 -->
+
+### **WORK IN PROGRESS**
+
+-   (theknut) change update interval from milliseconds to seconds
+-   (theknut) add axios timeout
+-   (theknut) remove unused onStateChange handler
+-   (theknut) logoff when adapter is unloaded
 
 ### 0.0.2 (2024-03-11)
 
