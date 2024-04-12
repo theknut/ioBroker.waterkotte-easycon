@@ -1,6 +1,6 @@
 {
   "name": "iobroker.waterkotte-easycon",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Read and write parameters of Waterkotte EasyCon heat pumps via CGI commands",
   "author": {
     "name": "theknut",

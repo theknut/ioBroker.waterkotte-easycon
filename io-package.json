@@ -1,139 +1,164 @@
 {
-    "common": {
-        "name": "waterkotte-easycon",
-        "version": "0.0.2",
-        "news": {
-            "0.0.2": {
-                "en": "prepare for release",
-                "de": "Vorbereitung für den Release",
-                "ru": "подготовка к выпуску",
-                "pt": "preparar para a liberação",
-                "nl": "bereid je voor op vrijlating",
-                "fr": "se préparer à la libération",
-                "it": "prepararsi al rilascio",
-                "es": "prepararse para la liberación",
-                "pl": "przygotować się do uwolnienia",
-                "uk": "підготовка до випуску",
-                "zh-cn": "准备释放"
-            },
-            "0.0.1": {
-                "en": "initial release",
-                "de": "Erstveröffentlichung",
-                "ru": "Начальная версия",
-                "pt": "lançamento inicial",
-                "nl": "Eerste uitgave",
-                "fr": "Première version",
-                "it": "Versione iniziale",
-                "es": "Versión inicial",
-                "pl": "Pierwsze wydanie",
-                "uk": "Початкова версія",
-                "zh-cn": "首次出版"
-            }
-        },
-        "titleLang": {
-            "en": "waterkotte-easycon",
-            "de": "waterkotte-easycon",
-            "ru": "waterkotte-easycon",
-            "pt": "waterkotte-easycon",
-            "nl": "waterkotte-easycon",
-            "fr": "waterkotte-easycon",
-            "it": "waterkotte-easycon",
-            "es": "waterkotte-easycon",
-            "pl": "waterkotte-easycon",
-            "uk": "waterkotte-easycon",
-            "zh-cn": "waterkotte-easycon"
-        },
-        "desc": {
-            "en": "Read and write parameters of Waterkotte EasyCon heat pumps via CGI requests",
-            "de": "Lesen und Schreiben von Parametern der Waterkotte EasyCon-Wärmepumpen via CGI Abfragen",
-            "ru": "Чтение и запись параметров тепловых насосов Waterkotte EasyCon via CGI",
-            "pt": "Ler e escrever parâmetros das bombas de calor Waterkotte EasyCon via CGI",
-            "nl": "Parameters van Waterkotte EasyCon warmtepompen lezen en schrijven via CGI",
-            "fr": "Lire et écrire les paramètres des pompes à chaleur Waterkotte EasyCon via CGI",
-            "it": "Leggere e scrivere i parametri delle pompe di calore Waterkotte EasyCon via CGI",
-            "es": "Leer y escribir parámetros de las bombas de calor Waterkotte EasyCon via CGI",
-            "pl": "Odczyt i zapis parametrów pomp ciepła Waterkotte EasyCon via CGI",
-            "uk": "Читання та запис параметрів теплових насосів Waterkotte EasyCon via CGI",
-            "zh-cn": "读取和写入 Waterkotte EasyCon 热泵参数"
-        },
-        "authors": ["theknut <theknutcoding@gmail.com>"],
-        "keywords": ["waterkotte", "cgi", "heat pump", "wärmepumpe"],
-        "licenseInformation": {
-            "type": "free",
-            "license": "MIT"
-        },
-        "platform": "Javascript/Node.js",
-        "main": "build/main.js",
-        "icon": "waterkotte-easycon.png",
-        "enabled": false,
-        "extIcon": "https://raw.githubusercontent.com/theknut/ioBroker.waterkotte-easycon/main/admin/waterkotte-easycon.png",
-        "readme": "https://github.com/theknut/ioBroker.waterkotte-easycon/blob/main/README.md",
-        "loglevel": "info",
-        "tier": 3,
-        "mode": "daemon",
-        "type": "climate-control",
-        "compact": true,
-        "connectionType": "local",
-        "dataSource": "poll",
-        "adminUI": {
-            "config": "json"
-        },
-        "dependencies": [
-            {
-                "js-controller": ">=3.3.22"
-            }
-        ],
-        "globalDependencies": [
-            {
-                "admin": ">=5.1.13"
-            }
-        ]
+  "common": {
+    "name": "waterkotte-easycon",
+    "version": "0.0.3",
+    "news": {
+      "0.0.3": {
+        "en": "change update interval from milliseconds to seconds\nadd axios timeout\nremove unused onStateChange handler\nlogoff when adapter is unloaded",
+        "de": "aktualisierungsintervall von millisekunden in sekunden ändern\naxios timeout hinzufügen\nnicht verwendet aufState Verändern Sie den Griff\nlogoff, wenn der adapter entladen ist",
+        "ru": "изменение интервала обновления от миллисекунд до секунд\nдобавить axios таймаут\nнеиспользуемых Смена обработчика\nlogoff при отключении адаптера",
+        "pt": "alterar o intervalo de atualização de milissegundos a segundos\nadicionar tempoout de axios\nremover não usado no Estado Manipulador de mudança\nlogoff quando o adaptador é descarregado",
+        "nl": "het updateinterval wijzigen van milliseconden naar seconden\naxio's timeout toevoegen\nongebruikt verwijderen Verander handler\nlogoff bij uitladen van de adapter",
+        "fr": "changer l'intervalle de mise à jour de millisecondes à secondes\najouter axios timeout\nsupprimer non utilisé sur l'état Changement de gestionnaire\ndéconnexion lorsque l'adaptateur est déchargé",
+        "it": "cambiare l'intervallo di aggiornamento da millisecondi a secondi\naggiungere timeout assios\nrimuovere inutilizzato suState Cambia maniglia\nlogoff quando l'adattatore viene scaricato",
+        "es": "cambiar intervalo de actualización de milisegundos a segundos\nañadir tiempo de axios\neliminar el uso no utilizado en el Estado Controlador de cambio\nlogoff cuando el adaptador se descarga",
+        "pl": "zmienić przedział aktualizacji z milisekund na sekundy\ndodaj czas axios\nusuń niewykorzystany stan Zmiana obsługi\nlogoff po rozpakowaniu adaptera",
+        "uk": "змінити інтервал оновлення з мілісекунди до секунд\nдодати axios час\nвидалити невикористаний наState Зміна обробника\nз'єднання при перевантаженні адаптера",
+        "zh-cn": "将更新间隔从毫秒改为秒\n添加轴超时\n删除未使用的状态 更改处理器\n卸载适配器时关闭"
+      },
+      "0.0.2": {
+        "en": "prepare for release",
+        "de": "Vorbereitung für den Release",
+        "ru": "подготовка к выпуску",
+        "pt": "preparar para a liberação",
+        "nl": "bereid je voor op vrijlating",
+        "fr": "se préparer à la libération",
+        "it": "prepararsi al rilascio",
+        "es": "prepararse para la liberación",
+        "pl": "przygotować się do uwolnienia",
+        "uk": "підготовка до випуску",
+        "zh-cn": "准备释放"
+      },
+      "0.0.1": {
+        "en": "initial release",
+        "de": "Erstveröffentlichung",
+        "ru": "Начальная версия",
+        "pt": "lançamento inicial",
+        "nl": "Eerste uitgave",
+        "fr": "Première version",
+        "it": "Versione iniziale",
+        "es": "Versión inicial",
+        "pl": "Pierwsze wydanie",
+        "uk": "Початкова версія",
+        "zh-cn": "首次出版"
+      }
     },
-    "native": {
-        "username": "",
-        "password": "",
-        "ipAddress": "",
-        "updateInterval": 300,
-        "pathFlavor": 1,
-        "removeWhitespace": true
+    "titleLang": {
+      "en": "waterkotte-easycon",
+      "de": "waterkotte-easycon",
+      "ru": "waterkotte-easycon",
+      "pt": "waterkotte-easycon",
+      "nl": "waterkotte-easycon",
+      "fr": "waterkotte-easycon",
+      "it": "waterkotte-easycon",
+      "es": "waterkotte-easycon",
+      "pl": "waterkotte-easycon",
+      "uk": "waterkotte-easycon",
+      "zh-cn": "waterkotte-easycon"
     },
-    "protectedNative": ["username", "password"],
-    "encryptedNative": ["password"],
-    "objects": [],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "Device or service connected",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.message",
-            "type": "state",
-            "common": {
-                "role": "state",
-                "name": "Information message from the adapter",
-                "type": "string",
-                "read": true,
-                "write": false,
-                "def": ""
-            },
-            "native": {}
-        }
+    "desc": {
+      "en": "Read and write parameters of Waterkotte EasyCon heat pumps via CGI requests",
+      "de": "Lesen und Schreiben von Parametern der Waterkotte EasyCon-Wärmepumpen via CGI Abfragen",
+      "ru": "Чтение и запись параметров тепловых насосов Waterkotte EasyCon via CGI",
+      "pt": "Ler e escrever parâmetros das bombas de calor Waterkotte EasyCon via CGI",
+      "nl": "Parameters van Waterkotte EasyCon warmtepompen lezen en schrijven via CGI",
+      "fr": "Lire et écrire les paramètres des pompes à chaleur Waterkotte EasyCon via CGI",
+      "it": "Leggere e scrivere i parametri delle pompe di calore Waterkotte EasyCon via CGI",
+      "es": "Leer y escribir parámetros de las bombas de calor Waterkotte EasyCon via CGI",
+      "pl": "Odczyt i zapis parametrów pomp ciepła Waterkotte EasyCon via CGI",
+      "uk": "Читання та запис параметрів теплових насосів Waterkotte EasyCon via CGI",
+      "zh-cn": "读取和写入 Waterkotte EasyCon 热泵参数"
+    },
+    "authors": [
+      "theknut <theknutcoding@gmail.com>"
+    ],
+    "keywords": [
+      "waterkotte",
+      "cgi",
+      "heat pump",
+      "wärmepumpe"
+    ],
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
+    "platform": "Javascript/Node.js",
+    "main": "build/main.js",
+    "icon": "waterkotte-easycon.png",
+    "enabled": false,
+    "extIcon": "https://raw.githubusercontent.com/theknut/ioBroker.waterkotte-easycon/main/admin/waterkotte-easycon.png",
+    "readme": "https://github.com/theknut/ioBroker.waterkotte-easycon/blob/main/README.md",
+    "loglevel": "info",
+    "tier": 3,
+    "mode": "daemon",
+    "type": "climate-control",
+    "compact": true,
+    "connectionType": "local",
+    "dataSource": "poll",
+    "adminUI": {
+      "config": "json"
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=3.3.22"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=5.1.13"
+      }
     ]
+  },
+  "native": {
+    "username": "",
+    "password": "",
+    "ipAddress": "",
+    "updateInterval": 300,
+    "pathFlavor": 1,
+    "removeWhitespace": true
+  },
+  "protectedNative": [
+    "username",
+    "password"
+  ],
+  "encryptedNative": [
+    "password"
+  ],
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "Device or service connected",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.message",
+      "type": "state",
+      "common": {
+        "role": "state",
+        "name": "Information message from the adapter",
+        "type": "string",
+        "read": true,
+        "write": false,
+        "def": ""
+      },
+      "native": {}
+    }
+  ]
 }

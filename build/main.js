@@ -34,6 +34,7 @@ class WaterkotteEasycon extends utils.Adapter {
       name: "waterkotte-easycon"
     });
     this.on("ready", this.onReady.bind(this));
+    this.on("unload", this.onUnload.bind(this));
   }
   /**
    * Is called when databases are connected and adapter received configuration.
