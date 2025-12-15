@@ -83,7 +83,6 @@
       "license": "MIT"
     },
     "platform": "Javascript/Node.js",
-    "main": "build/main.js",
     "icon": "waterkotte-easycon.png",
     "enabled": false,
     "extIcon": "https://raw.githubusercontent.com/theknut/ioBroker.waterkotte-easycon/main/admin/waterkotte-easycon.png",
