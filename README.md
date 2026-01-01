@@ -86,7 +86,7 @@ Check your router to find out the IP address of the heat pump and enable static 
 
 MIT License
 
-Copyright (c) 2024 theknut <theknutcoding@gmail.com>
+Copyright (c) 2024-2026 theknut <theknutcoding@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
