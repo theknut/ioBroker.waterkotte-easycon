@@ -67,6 +67,9 @@ Check your router to find out the IP address of the heat pump and enable static 
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+- (copilot) Adapter requires node.js >= 22 now
+
 ### 0.0.3 (2024-04-12)
 
 -   (theknut) change update interval from milliseconds to seconds
