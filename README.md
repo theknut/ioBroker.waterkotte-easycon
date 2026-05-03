@@ -82,6 +82,8 @@ Check your router to find out the IP address of the heat pump and enable static 
 
 -   (theknut) initial release
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 
 MIT License
