@@ -67,6 +67,10 @@ Check your router to find out the IP address of the heat pump and enable static 
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires js-controller >= 6.0.11 now.
+
 ### 0.0.3 (2024-04-12)
 
 -   (theknut) change update interval from milliseconds to seconds
