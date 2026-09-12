@@ -19,7 +19,7 @@
     "url": "https://github.com/theknut/ioBroker.waterkotte-easycon.git"
   },
   "engines": {
-    "node": ">= 18"
+    "node": ">= 22"
   },
   "dependencies": {
     "@iobroker/adapter-core": "^3.0.4",
