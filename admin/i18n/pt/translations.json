@@ -1,6 +1,6 @@
 {
     "credentialsHelp": "Use 'waterkotte' se desconhecido",
-    "ipAddress": "endereço de IP",
+    "ipAddress": "Endereço IP",
     "option1": "Opção 1",
     "option2": "opção 2",
     "password": "Senha",
@@ -10,6 +10,6 @@
     "updateInterval": "Intervalo de atualização",
     "updateIntervalHelp": "Em segundos (padrão = 300 segundos = 5 minutos)",
     "updateIntervalValidator": "Deve ser > 20 e < 86400",
-    "username": "Nome de usuário",
+    "username": "Nome do usuário",
     "waterkotte-easycon adapter settings": "Configurações do adaptador para waterkotte-easycon"
 }

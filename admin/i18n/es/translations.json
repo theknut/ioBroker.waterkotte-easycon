@@ -1,9 +1,9 @@
 {
     "credentialsHelp": "Utilice 'waterkotte' si se desconoce",
-    "ipAddress": "dirección IP",
+    "ipAddress": "Dirección IP",
     "option1": "Opción 1",
-    "option2": "opcion 2",
-    "password": "Contraseña",
+    "option2": "Opción 2",
+    "password": "Clave",
     "pathFlavor": "Formato de estado",
     "pathFlavorHelp": "Seleccione cómo se deben formatear las identificaciones estatales",
     "removeWhitespace": "Eliminar espacio de las identificaciones estatales",

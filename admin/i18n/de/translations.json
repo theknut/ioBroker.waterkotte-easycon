@@ -1,15 +1,15 @@
 {
     "credentialsHelp": "Verwenden Sie „Waterkotte“, falls unbekannt",
-    "ipAddress": "IP Adresse",
+    "ipAddress": "IP-Adresse",
     "option1": "Option 1",
     "option2": "Option 2",
     "password": "Passwort",
-    "pathFlavor": "Statusformat",
-    "pathFlavorHelp": "Wählen Sie aus, wie die Status-IDs formatiert werden sollen",
-    "removeWhitespace": "Entfernen Sie Leerzeichen aus den Status-IDs",
+    "pathFlavor": "Stateformat",
+    "pathFlavorHelp": "Wählen Sie aus, wie die State-IDs formatiert werden sollen",
+    "removeWhitespace": "Entfernen Sie Leerzeichen aus den State-IDs",
     "updateInterval": "Updateintervall",
     "updateIntervalHelp": "In Sekunden (Standard = 300 Sekunden = 5 Minuten)",
     "updateIntervalValidator": "Muss > 20 und < 86400 sein",
-    "username": "Nutzername",
+    "username": "Benutzername",
     "waterkotte-easycon adapter settings": "Adaptereinstellungen für Waterkotte-Easycon"
 }
